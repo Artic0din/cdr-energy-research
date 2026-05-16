@@ -151,13 +151,26 @@ def fetch_eme_refdata() -> dict:
 
 
 def build_retailer_list(refdata: dict) -> list[dict]:
-    """Returns list of retailer entries with brand, cdrCode, base URI, slug, metadata."""
+    """Returns deduped list of retailer entries.
+
+    Dedupes by cdrCode (collapses duplicate org records like
+    Origin/Electricity + Origin/LPG + Origin/Retail Limited all sharing
+    cdrCode=origin). Drops orgs that have NO electricityBillURL AND a
+    gasBillURL (gas-only retailers — we only care about electricity).
+    """
     orgs = refdata.get("data", {}).get("organisations", {})
+    seen_cdr_codes: set[str] = set()
     out = []
     for org_id, o in orgs.items():
         cdr_code = o.get("cdrCode")
         if not cdr_code:
             continue
+        if cdr_code in seen_cdr_codes:
+            continue
+        # Skip gas-only retailers (no electricityBillURL, has gasBillURL)
+        if not o.get("electricityBillURL") and o.get("gasBillURL"):
+            continue
+        seen_cdr_codes.add(cdr_code)
         out.append({
             "orgId": org_id,
             "cdrCode": cdr_code,
