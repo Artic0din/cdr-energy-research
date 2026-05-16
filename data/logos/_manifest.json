@@ -1,0 +1,1775 @@
+[
+  {
+    "orgId": "1559",
+    "cdrCode": "ergon",
+    "name": "Ergon Energy Queensland Pty Ltd",
+    "logo": "/static/organisations/logos/04406045549ba2ea3773d3ea0ef06f89.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/04406045549ba2ea3773d3ea0ef06f89.png",
+    "file": "04406045549ba2ea3773d3ea0ef06f89.png",
+    "status": "ok(15027)"
+  },
+  {
+    "orgId": "1560",
+    "cdrCode": "people-energy",
+    "name": "People Energy Pty Ltd",
+    "logo": "/static/organisations/logos/people_energy.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/people_energy.png",
+    "file": "people_energy.png",
+    "status": "ok(4129)"
+  },
+  {
+    "orgId": "9611",
+    "cdrCode": "covau",
+    "name": "CovaU Pty Ltd",
+    "logo": "/static/organisations/logos/cova_u.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/cova_u.png",
+    "file": "cova_u.png",
+    "status": "ok(12459)"
+  },
+  {
+    "orgId": "9612",
+    "cdrCode": "next-business",
+    "name": "Next Business Energy Pty Ltd",
+    "logo": "/static/organisations/logos/01007813b3482f5bbb2e8b38736df0bc.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/01007813b3482f5bbb2e8b38736df0bc.png",
+    "file": "01007813b3482f5bbb2e8b38736df0bc.png",
+    "status": "ok(24359)"
+  },
+  {
+    "orgId": "9616",
+    "cdrCode": "blue-nrg",
+    "name": "Blue NRG Pty Ltd",
+    "logo": "/static/organisations/logos/blue_nrg.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/blue_nrg.png",
+    "file": "blue_nrg.png",
+    "status": "ok(12001)"
+  },
+  {
+    "orgId": "9617",
+    "cdrCode": "tango",
+    "name": "Pacific Blue Retail Pty Ltd",
+    "logo": "/static/organisations/logos/4a9a1b580f5892c7ca3d1b77c2026835.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/4a9a1b580f5892c7ca3d1b77c2026835.png",
+    "file": "4a9a1b580f5892c7ca3d1b77c2026835.png",
+    "status": "ok(20435)"
+  },
+  {
+    "orgId": "9618",
+    "cdrCode": "commander",
+    "name": "Commander Power & Gas (M2 Energy Pty Ltd)",
+    "logo": "/static/organisations/logos/commander.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/commander.png",
+    "file": "commander.png",
+    "status": "ok(7743)"
+  },
+  {
+    "orgId": "9619",
+    "cdrCode": "click-energy",
+    "name": "Click Energy Pty Ltd",
+    "logo": "/static/organisations/logos/click_energy.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/click_energy.png",
+    "file": "click_energy.png",
+    "status": "ok(48505)"
+  },
+  {
+    "orgId": "9620",
+    "cdrCode": "agl",
+    "name": "AGL Retail Energy Limited",
+    "logo": "/static/organisations/logos/agl.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/agl.png",
+    "file": "agl.png",
+    "status": "ok(13014)"
+  },
+  {
+    "orgId": "9621",
+    "cdrCode": "agl",
+    "name": "AGL Sales Pty Limited",
+    "logo": "/static/organisations/logos/agl.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/agl.png",
+    "file": "agl.png",
+    "status": "cached"
+  },
+  {
+    "orgId": "9623",
+    "cdrCode": "erm-power",
+    "name": "ERM Power Retail Pty Ltd",
+    "logo": "/static/organisations/logos/erm.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/erm.png",
+    "file": "erm.png",
+    "status": "ok(30519)"
+  },
+  {
+    "orgId": "9624",
+    "cdrCode": "alinta",
+    "name": "Alinta Energy Retail Sales Pty Ltd",
+    "logo": "/static/organisations/logos/alinta.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/alinta.png",
+    "file": "alinta.png",
+    "status": "ok(16591)"
+  },
+  {
+    "orgId": "9625",
+    "cdrCode": "powershop",
+    "name": "Powershop Australia Pty Ltd",
+    "logo": "/static/organisations/logos/435e86067932be52e28abb3fbe0b6e82.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/435e86067932be52e28abb3fbe0b6e82.png",
+    "file": "435e86067932be52e28abb3fbe0b6e82.png",
+    "status": "ok(13278)"
+  },
+  {
+    "orgId": "9626",
+    "cdrCode": "qenergy",
+    "name": "QEnergy",
+    "logo": "/static/organisations/logos/qenergy.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/qenergy.png",
+    "file": "qenergy.png",
+    "status": "ok(9267)"
+  },
+  {
+    "orgId": "9627",
+    "cdrCode": "sanctuary",
+    "name": "Sanctuary Energy Pty Ltd",
+    "logo": "/static/organisations/logos/sanctuary.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/sanctuary.png",
+    "file": "sanctuary.png",
+    "status": "ok(17982)"
+  },
+  {
+    "orgId": "9630",
+    "cdrCode": "actewagl",
+    "name": "ActewAGL Retail",
+    "logo": "/static/organisations/logos/6611c87938a7a1be03ee55314ba225d3.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/6611c87938a7a1be03ee55314ba225d3.png",
+    "file": "6611c87938a7a1be03ee55314ba225d3.png",
+    "status": "ok(3116)"
+  },
+  {
+    "orgId": "9631",
+    "cdrCode": "aurora",
+    "name": "Aurora Energy",
+    "logo": "/static/organisations/logos/e9bfabdf2fc18919eb7f0709bcc8af31.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/e9bfabdf2fc18919eb7f0709bcc8af31.png",
+    "file": "e9bfabdf2fc18919eb7f0709bcc8af31.png",
+    "status": "ok(10888)"
+  },
+  {
+    "orgId": "9632",
+    "cdrCode": "momentum",
+    "name": "Momentum Energy Pty Ltd",
+    "logo": "/static/organisations/logos/momentum.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/momentum.png",
+    "file": "momentum.png",
+    "status": "ok(9520)"
+  },
+  {
+    "orgId": "9633",
+    "cdrCode": "diamond",
+    "name": "Diamond Energy Pty Ltd",
+    "logo": "/static/organisations/logos/diamond.jpg",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/diamond.jpg",
+    "file": "diamond.jpg",
+    "status": "ok(5084)"
+  },
+  {
+    "orgId": "9634",
+    "cdrCode": "red-energy",
+    "name": "Red Energy Pty Ltd",
+    "logo": "/static/organisations/logos/red_energy.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/red_energy.png",
+    "file": "red_energy.png",
+    "status": "ok(15824)"
+  },
+  {
+    "orgId": "9635",
+    "cdrCode": "simply-energy",
+    "name": "Simply Energy",
+    "logo": "/static/organisations/logos/c2c300f383369e531a45e25986c84641.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/c2c300f383369e531a45e25986c84641.png",
+    "file": "c2c300f383369e531a45e25986c84641.png",
+    "status": "ok(28309)"
+  },
+  {
+    "orgId": "9637",
+    "cdrCode": "energyaustralia",
+    "name": "EnergyAustralia Pty Ltd",
+    "logo": "/static/organisations/logos/energy_australia.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/energy_australia.png",
+    "file": "energy_australia.png",
+    "status": "ok(35603)"
+  },
+  {
+    "orgId": "9638",
+    "cdrCode": "dodo",
+    "name": "M2 Energy Pty Ltd",
+    "logo": "/static/organisations/logos/dodo.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/dodo.png",
+    "file": "dodo.png",
+    "status": "ok(14554)"
+  },
+  {
+    "orgId": "9639",
+    "cdrCode": "origin",
+    "name": "Origin Energy Electricity",
+    "logo": "/static/organisations/logos/068a3484995b2d5a09c0708a68051c14.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/068a3484995b2d5a09c0708a68051c14.png",
+    "file": "068a3484995b2d5a09c0708a68051c14.png",
+    "status": "ok(6817)"
+  },
+  {
+    "orgId": "9643",
+    "cdrCode": "lumo",
+    "name": "Lumo Energy (SA) Pty Ltd",
+    "logo": "/static/organisations/logos/lumo.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/lumo.png",
+    "file": "lumo.png",
+    "status": "ok(6694)"
+  },
+  {
+    "orgId": "9644",
+    "cdrCode": "powerdirect",
+    "name": "Powerdirect Pty Ltd",
+    "logo": "/static/organisations/logos/power_direct.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/power_direct.png",
+    "file": "power_direct.png",
+    "status": "ok(14940)"
+  },
+  {
+    "orgId": "9645",
+    "cdrCode": "agl",
+    "name": "AGL",
+    "logo": "/static/organisations/logos/agl.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/agl.png",
+    "file": "agl.png",
+    "status": "cached"
+  },
+  {
+    "orgId": "9646",
+    "cdrCode": "lumo",
+    "name": "Lumo Energy (QLD) Pty Ltd",
+    "logo": "/static/organisations/logos/lumo.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/lumo.png",
+    "file": "lumo.png",
+    "status": "cached"
+  },
+  {
+    "orgId": "9648",
+    "cdrCode": "origin",
+    "name": "Origin Energy Retail Limited",
+    "logo": "/static/organisations/logos/41313628bc260364dc8803dcb3340de9.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/41313628bc260364dc8803dcb3340de9.png",
+    "file": "41313628bc260364dc8803dcb3340de9.png",
+    "status": "ok(6817)"
+  },
+  {
+    "orgId": "9649",
+    "cdrCode": "origin",
+    "name": "Origin Energy LPG Limited",
+    "logo": "/static/organisations/logos/6e8710de3bdff597d54198cc4b9d8797.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/6e8710de3bdff597d54198cc4b9d8797.png",
+    "file": "6e8710de3bdff597d54198cc4b9d8797.png",
+    "status": "ok(6817)"
+  },
+  {
+    "orgId": "9650",
+    "cdrCode": "lumo",
+    "name": "Lumo Energy (NSW) Pty Ltd",
+    "logo": "/static/organisations/logos/lumo.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/lumo.png",
+    "file": "lumo.png",
+    "status": "cached"
+  },
+  {
+    "orgId": "24186",
+    "cdrCode": "pooled-energy",
+    "name": "Pooled Energy Pty Ltd",
+    "logo": "/static/organisations/logos/19969d6e234fd0189911de666767e427.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/19969d6e234fd0189911de666767e427.png",
+    "file": "19969d6e234fd0189911de666767e427.png",
+    "status": "ok(12921)"
+  },
+  {
+    "orgId": "24187",
+    "cdrCode": "bright-spark",
+    "name": "Bright Spark Power Pty Ltd",
+    "logo": "/static/organisations/logos/07e379b4a9b01c82e789aa00d4f1daf4.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/07e379b4a9b01c82e789aa00d4f1daf4.png",
+    "file": "07e379b4a9b01c82e789aa00d4f1daf4.png",
+    "status": "ok(8575)"
+  },
+  {
+    "orgId": "24188",
+    "cdrCode": "humenergy",
+    "name": "Humenergy Group Pty Ltd",
+    "logo": "/static/organisations/logos/8d50b464df3c0f95b4837906f3102842.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/8d50b464df3c0f95b4837906f3102842.png",
+    "file": "8d50b464df3c0f95b4837906f3102842.png",
+    "status": "ok(14554)"
+  },
+  {
+    "orgId": "24189",
+    "cdrCode": "electricity-in-a-box",
+    "name": "Electricity in a Box Pty Ltd",
+    "logo": "/static/organisations/logos/0082c19f38cbb2364509982eccfeb1d3.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/0082c19f38cbb2364509982eccfeb1d3.png",
+    "file": "0082c19f38cbb2364509982eccfeb1d3.png",
+    "status": "ok(19146)"
+  },
+  {
+    "orgId": "24190",
+    "cdrCode": "cleanco",
+    "name": "CleanCo Queensland Limited",
+    "logo": "/static/organisations/logos/510e8c51f58822e92227d28fc6ddac6c.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/510e8c51f58822e92227d28fc6ddac6c.png",
+    "file": "510e8c51f58822e92227d28fc6ddac6c.png",
+    "status": "ok(12701)"
+  },
+  {
+    "orgId": "24191",
+    "cdrCode": "yes-energy",
+    "name": "Y.E.S. Energy (SA) Pty Ltd",
+    "logo": "/static/organisations/logos/be6f8a17ead25b8be74e876d83e5c53c.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/be6f8a17ead25b8be74e876d83e5c53c.png",
+    "file": "be6f8a17ead25b8be74e876d83e5c53c.png",
+    "status": "ok(20365)"
+  },
+  {
+    "orgId": "24192",
+    "cdrCode": "radian",
+    "name": "Radian Holdings Pty Ltd",
+    "logo": "/static/organisations/logos/d3d3d70acacace49b7f04cc35bdcce75.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/d3d3d70acacace49b7f04cc35bdcce75.png",
+    "file": "d3d3d70acacace49b7f04cc35bdcce75.png",
+    "status": "ok(12311)"
+  },
+  {
+    "orgId": "24193",
+    "cdrCode": "glow-power",
+    "name": "Energy Services Management Pty Ltd",
+    "logo": "/static/organisations/logos/7ca0ac97d770e7b90b88b51aaed827ff.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/7ca0ac97d770e7b90b88b51aaed827ff.png",
+    "file": "7ca0ac97d770e7b90b88b51aaed827ff.png",
+    "status": "ok(13966)"
+  },
+  {
+    "orgId": "24194",
+    "cdrCode": "social-energy",
+    "name": "Social Energy Australia Pty Ltd",
+    "logo": "/static/organisations/logos/39e9c54ce81e4a7fcefb2a43891ade77.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/39e9c54ce81e4a7fcefb2a43891ade77.png",
+    "file": "39e9c54ce81e4a7fcefb2a43891ade77.png",
+    "status": "ok(13764)"
+  },
+  {
+    "orgId": "24195",
+    "cdrCode": "altogether",
+    "name": "Altogether Group Pty Ltd",
+    "logo": "/static/organisations/logos/6323fd40edf62f74f5a9d5c5b6063d74.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/6323fd40edf62f74f5a9d5c5b6063d74.png",
+    "file": "6323fd40edf62f74f5a9d5c5b6063d74.png",
+    "status": "ok(15867)"
+  },
+  {
+    "orgId": "24196",
+    "cdrCode": "shell-energy",
+    "name": "Shell Energy Retail Pty Ltd ",
+    "logo": "/static/organisations/logos/3193ce6ea2a6923ead7b75e5775725cc.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/3193ce6ea2a6923ead7b75e5775725cc.png",
+    "file": "3193ce6ea2a6923ead7b75e5775725cc.png",
+    "status": "ok(15449)"
+  },
+  {
+    "orgId": "24197",
+    "cdrCode": "smart-energy",
+    "name": "Smart Energy Retail Pty Ltd",
+    "logo": "/static/organisations/logos/939334bc494d4e99ac8848644a45a066.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/939334bc494d4e99ac8848644a45a066.png",
+    "file": "939334bc494d4e99ac8848644a45a066.png",
+    "status": "ok(22719)"
+  },
+  {
+    "orgId": "24198",
+    "cdrCode": "microgrid",
+    "name": "Microgrid Power Pty Ltd",
+    "logo": "/static/organisations/logos/6a4f4c8e6b6ce4a275f4c611cd533913.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/6a4f4c8e6b6ce4a275f4c611cd533913.png",
+    "file": "6a4f4c8e6b6ce4a275f4c611cd533913.png",
+    "status": "ok(11513)"
+  },
+  {
+    "orgId": "24199",
+    "cdrCode": "localvolts",
+    "name": "Localvolts Pty Ltd",
+    "logo": "/static/organisations/logos/cf8f859eacb53a5b56f3467a7813d6fe.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/cf8f859eacb53a5b56f3467a7813d6fe.png",
+    "file": "cf8f859eacb53a5b56f3467a7813d6fe.png",
+    "status": "ok(6820)"
+  },
+  {
+    "orgId": "24200",
+    "cdrCode": "on-by-energyaustralia",
+    "name": "EnergyAustralia Pty Ltd",
+    "logo": "/static/organisations/logos/ed2e5106218d9e617216949b37e6e73f.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/ed2e5106218d9e617216949b37e6e73f.png",
+    "file": "ed2e5106218d9e617216949b37e6e73f.png",
+    "status": "ok(13444)"
+  },
+  {
+    "orgId": "24201",
+    "cdrCode": "coles",
+    "name": "Powershop Australia Pty Limited",
+    "logo": "/static/organisations/logos/a89c1ff57030ee93211e9fba27e29cb3.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/a89c1ff57030ee93211e9fba27e29cb3.png",
+    "file": "a89c1ff57030ee93211e9fba27e29cb3.png",
+    "status": "ok(14939)"
+  },
+  {
+    "orgId": "24202",
+    "cdrCode": "sonnen",
+    "name": "Energy Locals Pty Ltd",
+    "logo": "/static/organisations/logos/f24cf95912d90a60409282a147a4c2b2.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/f24cf95912d90a60409282a147a4c2b2.png",
+    "file": "f24cf95912d90a60409282a147a4c2b2.png",
+    "status": "ok(8891)"
+  },
+  {
+    "orgId": "24203",
+    "cdrCode": "ea-connect",
+    "name": "Ellis Air Connect Pty Ltd",
+    "logo": "/static/organisations/logos/c549c1067f3f1be2ab953068fa95e9d4.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/c549c1067f3f1be2ab953068fa95e9d4.png",
+    "file": "c549c1067f3f1be2ab953068fa95e9d4.png",
+    "status": "ok(33770)"
+  },
+  {
+    "orgId": "24204",
+    "cdrCode": "gee-energy",
+    "name": "GEE Power & Gas Pty Ltd ",
+    "logo": "/static/organisations/logos/95b4d2ac177e0a88ee18a3f2b9a2f298.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/95b4d2ac177e0a88ee18a3f2b9a2f298.png",
+    "file": "95b4d2ac177e0a88ee18a3f2b9a2f298.png",
+    "status": "ok(13098)"
+  },
+  {
+    "orgId": "24205",
+    "cdrCode": "brighte",
+    "name": "Brighte Energy Pty Ltd",
+    "logo": "/static/organisations/logos/278bfeac35840aa0ee0dfa49b8023379.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/278bfeac35840aa0ee0dfa49b8023379.png",
+    "file": "278bfeac35840aa0ee0dfa49b8023379.png",
+    "status": "ok(5219)"
+  },
+  {
+    "orgId": "24206",
+    "cdrCode": "circular",
+    "name": "Maximum Energy Retail Pty Ltd",
+    "logo": "/static/organisations/logos/fd82878b16bd34f4c2d2e4f8eb233680.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/fd82878b16bd34f4c2d2e4f8eb233680.png",
+    "file": "fd82878b16bd34f4c2d2e4f8eb233680.png",
+    "status": "ok(25308)"
+  },
+  {
+    "orgId": "24207",
+    "cdrCode": "telstra-energy",
+    "name": "Telstra Energy (Retail) Pty Ltd",
+    "logo": "/static/organisations/logos/d318cecab0b910697a5fe7f5c6e8c6a3.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/d318cecab0b910697a5fe7f5c6e8c6a3.png",
+    "file": "d318cecab0b910697a5fe7f5c6e8c6a3.png",
+    "status": "ok(12610)"
+  },
+  {
+    "orgId": "24208",
+    "cdrCode": "besy",
+    "name": "EPC Technologies Pty Ltd",
+    "logo": "/static/organisations/logos/79a78f730f64c2eab1fb9c9064a7c22c.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/79a78f730f64c2eab1fb9c9064a7c22c.png",
+    "file": "79a78f730f64c2eab1fb9c9064a7c22c.png",
+    "status": "ok(12425)"
+  },
+  {
+    "orgId": "24209",
+    "cdrCode": "zen-energy",
+    "name": "ZEN Energy Retail Pty Ltd",
+    "logo": "/static/organisations/logos/1fc3b6168abbd718eab34718a4faac54.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/1fc3b6168abbd718eab34718a4faac54.png",
+    "file": "1fc3b6168abbd718eab34718a4faac54.png",
+    "status": "ok(8061)"
+  },
+  {
+    "orgId": "24210",
+    "cdrCode": "powerhub",
+    "name": "PowerHub Pty Ltd",
+    "logo": "/static/organisations/logos/92e99e4f5476201689124f90239d8397.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/92e99e4f5476201689124f90239d8397.png",
+    "file": "92e99e4f5476201689124f90239d8397.png",
+    "status": "ok(10324)"
+  },
+  {
+    "orgId": "24211",
+    "cdrCode": "arcstream",
+    "name": "Electricity in a Box Pty Ltd",
+    "logo": "/static/organisations/logos/1c6c90d1b567cfb1109697663889577b.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/1c6c90d1b567cfb1109697663889577b.png",
+    "file": "1c6c90d1b567cfb1109697663889577b.png",
+    "status": "ok(42413)"
+  },
+  {
+    "orgId": "24212",
+    "cdrCode": "igeno",
+    "name": "iGENO Pty Limited",
+    "logo": "/static/organisations/logos/93991c39a20e5240af4d607533308377.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/93991c39a20e5240af4d607533308377.png",
+    "file": "93991c39a20e5240af4d607533308377.png",
+    "status": "ok(3388)"
+  },
+  {
+    "orgId": "24213",
+    "cdrCode": "ampol",
+    "name": "Ampol Energy (Retail) Pty Ltd",
+    "logo": "/static/organisations/logos/1f4cf2cf0bfad2bb4395dc39c40e94b8.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/1f4cf2cf0bfad2bb4395dc39c40e94b8.png",
+    "file": "1f4cf2cf0bfad2bb4395dc39c40e94b8.png",
+    "status": "ok(4970)"
+  },
+  {
+    "orgId": "24214",
+    "cdrCode": "powow",
+    "name": "Powow Power Pty Ltd",
+    "logo": "/static/organisations/logos/d9a5cd1c90b50b6ef3a36d213a574245.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/d9a5cd1c90b50b6ef3a36d213a574245.png",
+    "file": "d9a5cd1c90b50b6ef3a36d213a574245.png",
+    "status": "ok(27274)"
+  },
+  {
+    "orgId": "24215",
+    "cdrCode": "ovo-energy",
+    "name": "OVO Energy Pty Ltd",
+    "logo": "/static/organisations/logos/ba5872c5cf89f79b9ab14f19cb2d8e72.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/ba5872c5cf89f79b9ab14f19cb2d8e72.png",
+    "file": "ba5872c5cf89f79b9ab14f19cb2d8e72.png",
+    "status": "ok(38795)"
+  },
+  {
+    "orgId": "24216",
+    "cdrCode": "flow-power",
+    "name": "Progressive Green Pty Ltd",
+    "logo": "/static/organisations/logos/a2e3b81a479f4c3ea9434600700a3b67.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/a2e3b81a479f4c3ea9434600700a3b67.png",
+    "file": "a2e3b81a479f4c3ea9434600700a3b67.png",
+    "status": "ok(9328)"
+  },
+  {
+    "orgId": "24217",
+    "cdrCode": "pacific-blue",
+    "name": "Pacific Blue Retail Pty Ltd",
+    "logo": "/static/organisations/logos/13771f1d9fad4a0f17c6d95eab8f82a8.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/13771f1d9fad4a0f17c6d95eab8f82a8.png",
+    "file": "13771f1d9fad4a0f17c6d95eab8f82a8.png",
+    "status": "ok(15763)"
+  },
+  {
+    "orgId": "25000",
+    "cdrCode": "io-energy",
+    "name": "Energy Locals Pty Ltd",
+    "logo": "/static/organisations/logos/6b0b83e2b11787bca329dae1eeb49f62.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/6b0b83e2b11787bca329dae1eeb49f62.png",
+    "file": "6b0b83e2b11787bca329dae1eeb49f62.png",
+    "status": "ok(60360)"
+  },
+  {
+    "orgId": "25001",
+    "cdrCode": "engie",
+    "name": "IPower Pty Ltd and IPower 2 Pty Ltd",
+    "logo": "/static/organisations/logos/e9a389558bc196629d27a0ade1772676.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/e9a389558bc196629d27a0ade1772676.png",
+    "file": "e9a389558bc196629d27a0ade1772676.png",
+    "status": "ok(4982)"
+  },
+  {
+    "orgId": "25002",
+    "cdrCode": "flipped",
+    "name": "Flipped Energy Australia Pty Ltd",
+    "logo": "/static/organisations/logos/438ff02d87cec3f985c465552312d2e1.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/438ff02d87cec3f985c465552312d2e1.png",
+    "file": "438ff02d87cec3f985c465552312d2e1.png",
+    "status": "ok(9570)"
+  },
+  {
+    "orgId": "25003",
+    "cdrCode": "arcline",
+    "name": "EL Retail Energy Pty Ltd ",
+    "logo": "/static/organisations/logos/cc1f9d42109cdfd0dbf841a340f2a127.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/cc1f9d42109cdfd0dbf841a340f2a127.png",
+    "file": "cc1f9d42109cdfd0dbf841a340f2a127.png",
+    "status": "ok(4109)"
+  },
+  {
+    "orgId": "25004",
+    "cdrCode": "lumo",
+    "name": "Lumo Energy Australia Pty Ltd",
+    "logo": "/static/organisations/logos/0b0dc529ab604c5888c14da15cc16ff7.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/0b0dc529ab604c5888c14da15cc16ff7.png",
+    "file": "0b0dc529ab604c5888c14da15cc16ff7.png",
+    "status": "ok(6694)"
+  },
+  {
+    "orgId": "25005",
+    "cdrCode": "smartestenergy",
+    "name": "SmartestEnergy Australia Pty Ltd",
+    "logo": "/static/organisations/logos/116d93f30044cfc65bbe86a25626bf0a.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/116d93f30044cfc65bbe86a25626bf0a.png",
+    "file": "116d93f30044cfc65bbe86a25626bf0a.png",
+    "status": "ok(55484)"
+  },
+  {
+    "orgId": "25006",
+    "cdrCode": "sumo-gas",
+    "name": "Sumo Gas Pty Ltd",
+    "logo": "/static/organisations/logos/57aa1c7550dbea0ef05aaba3f105d69c.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/57aa1c7550dbea0ef05aaba3f105d69c.png",
+    "file": "57aa1c7550dbea0ef05aaba3f105d69c.png",
+    "status": "ok(8729)"
+  },
+  {
+    "orgId": "25007",
+    "cdrCode": "future-x",
+    "name": "Online Power and Gas Pty Ltd",
+    "logo": "/static/organisations/logos/a1e89851ecf8301831c2c55089518007.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/a1e89851ecf8301831c2c55089518007.png",
+    "file": "a1e89851ecf8301831c2c55089518007.png",
+    "status": "ok(4028)"
+  },
+  {
+    "orgId": "25008",
+    "cdrCode": "tesla",
+    "name": "Tesla Energy Ventures Australia Pty Ltd",
+    "logo": "/static/organisations/logos/b5ebd982506da96c4d0db64bfead8e6c.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/b5ebd982506da96c4d0db64bfead8e6c.png",
+    "file": "b5ebd982506da96c4d0db64bfead8e6c.png",
+    "status": "ok(2292)"
+  },
+  {
+    "orgId": "25009",
+    "cdrCode": "energy-locals",
+    "name": "Energy Locals Pty Ltd",
+    "logo": "/static/organisations/logos/2b5b28aff0646cf034b41617c7a2add0.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/2b5b28aff0646cf034b41617c7a2add0.png",
+    "file": "2b5b28aff0646cf034b41617c7a2add0.png",
+    "status": "ok(16592)"
+  },
+  {
+    "orgId": "25010",
+    "cdrCode": "energy-locals",
+    "name": "EL Retail Energy Pty Ltd ",
+    "logo": "/static/organisations/logos/7bcf81755bc27d9553d0d7d065124ce6.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/7bcf81755bc27d9553d0d7d065124ce6.png",
+    "file": "7bcf81755bc27d9553d0d7d065124ce6.png",
+    "status": "ok(6102)"
+  },
+  {
+    "orgId": "25011",
+    "cdrCode": "ovo-energy",
+    "name": "MYOB powered by OVO Pty Ltd",
+    "logo": "/static/organisations/logos/b8085989c8729c8c6bb2ebf6906678aa.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/b8085989c8729c8c6bb2ebf6906678aa.png",
+    "file": "b8085989c8729c8c6bb2ebf6906678aa.png",
+    "status": "ok(27135)"
+  },
+  {
+    "orgId": "25012",
+    "cdrCode": "macarthur",
+    "name": "Macarthur Energy Retail Pty Ltd",
+    "logo": "/static/organisations/logos/cec99be1c421ae486fb308b68f8b2fa5.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/cec99be1c421ae486fb308b68f8b2fa5.png",
+    "file": "cec99be1c421ae486fb308b68f8b2fa5.png",
+    "status": "ok(5401)"
+  },
+  {
+    "orgId": "25013",
+    "cdrCode": "energy-locals",
+    "name": "EL Retail Energy Pty Ltd ",
+    "logo": "/static/organisations/logos/b039d127a4aeff412153c66494f2ed89.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/b039d127a4aeff412153c66494f2ed89.png",
+    "file": "b039d127a4aeff412153c66494f2ed89.png",
+    "status": "ok(7356)"
+  },
+  {
+    "orgId": "25014",
+    "cdrCode": "perpetual",
+    "name": "Perpetual Energy Pty Ltd",
+    "logo": "/static/organisations/logos/f4ae158e047663faaa3ce5893553cd33.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/f4ae158e047663faaa3ce5893553cd33.png",
+    "file": "f4ae158e047663faaa3ce5893553cd33.png",
+    "status": "ok(13152)"
+  },
+  {
+    "orgId": "25015",
+    "cdrCode": "savant",
+    "name": "Savant Energy Power Networks Pty Limited",
+    "logo": "/static/organisations/logos/e29e6529f6c6eb05c5b2ca255938937c.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/e29e6529f6c6eb05c5b2ca255938937c.png",
+    "file": "e29e6529f6c6eb05c5b2ca255938937c.png",
+    "status": "ok(11172)"
+  },
+  {
+    "orgId": "25016",
+    "cdrCode": "veolia",
+    "name": "Veolia Energy (ANZ) Pty Ltd",
+    "logo": "/static/organisations/logos/7e8dde1540b66ff92227909e7165c559.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/7e8dde1540b66ff92227909e7165c559.png",
+    "file": "7e8dde1540b66ff92227909e7165c559.png",
+    "status": "ok(5200)"
+  },
+  {
+    "orgId": "25017",
+    "cdrCode": "silver-asset",
+    "name": "Ezi Power Pty Ltd",
+    "logo": "/static/organisations/logos/a8729139c8a1cf211627c90592449b46.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/a8729139c8a1cf211627c90592449b46.png",
+    "file": "a8729139c8a1cf211627c90592449b46.png",
+    "status": "ok(19523)"
+  },
+  {
+    "orgId": "25018",
+    "cdrCode": "radian",
+    "name": "Radian Holdings Pty Ltd",
+    "logo": "/static/organisations/logos/e7aa7fceceb34995a6eb53c666162ba3.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/e7aa7fceceb34995a6eb53c666162ba3.png",
+    "file": "e7aa7fceceb34995a6eb53c666162ba3.png",
+    "status": "ok(60360)"
+  },
+  {
+    "orgId": "25019",
+    "cdrCode": "erc-energy",
+    "name": "ERC Energy Pty Ltd",
+    "logo": "/static/organisations/logos/05b1bac4159890222db6b2b5d9b91029.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/05b1bac4159890222db6b2b5d9b91029.png",
+    "file": "05b1bac4159890222db6b2b5d9b91029.png",
+    "status": "ok(15491)"
+  },
+  {
+    "orgId": "25020",
+    "cdrCode": "energy-locals-urban",
+    "name": "Energy Trade Pty Ltd",
+    "logo": "/static/organisations/logos/627094e73c210df02fadab1ea9ebac5e.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/627094e73c210df02fadab1ea9ebac5e.png",
+    "file": "627094e73c210df02fadab1ea9ebac5e.png",
+    "status": "ok(16054)"
+  },
+  {
+    "orgId": "25021",
+    "cdrCode": "aseno",
+    "name": "ASENO Pty Ltd",
+    "logo": "/static/organisations/logos/d750f9dd2f6ce940f13061e2f5f44883.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/d750f9dd2f6ce940f13061e2f5f44883.png",
+    "file": "d750f9dd2f6ce940f13061e2f5f44883.png",
+    "status": "ok(22686)"
+  },
+  {
+    "orgId": "103820",
+    "cdrCode": "1st-energy",
+    "name": "1st Energy Pty Ltd",
+    "logo": "/static/organisations/logos/7d60dc912ecc8c32110796b21393b349.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/7d60dc912ecc8c32110796b21393b349.png",
+    "file": "7d60dc912ecc8c32110796b21393b349.png",
+    "status": "ok(12259)"
+  },
+  {
+    "orgId": "114571",
+    "cdrCode": "mojo",
+    "name": "Mojo Power Pty Ltd",
+    "logo": "/static/organisations/logos/mojo.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/mojo.png",
+    "file": "mojo.png",
+    "status": "ok(9103)"
+  },
+  {
+    "orgId": "152706",
+    "cdrCode": "enova",
+    "name": "Enova Energy",
+    "logo": "/static/organisations/logos/9f6bf6b8a38fdeb5ef425f7295339223.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/9f6bf6b8a38fdeb5ef425f7295339223.png",
+    "file": "9f6bf6b8a38fdeb5ef425f7295339223.png",
+    "status": "ok(24389)"
+  },
+  {
+    "orgId": "201064",
+    "cdrCode": "energy-locals",
+    "name": "EL Retail Energy Pty Ltd",
+    "logo": "/static/organisations/logos/energy_locals.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/energy_locals.png",
+    "file": "energy_locals.png",
+    "status": "ok(18671)"
+  },
+  {
+    "orgId": "211603",
+    "cdrCode": "winconnect",
+    "name": "WINconnect Pty Ltd",
+    "logo": "/static/organisations/logos/win_connect.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/win_connect.png",
+    "file": "win_connect.png",
+    "status": "ok(26982)"
+  },
+  {
+    "orgId": "434028",
+    "cdrCode": "amaysim",
+    "name": "Click Energy Pty Ltd",
+    "logo": "/static/organisations/logos/amaysim.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/amaysim.png",
+    "file": "amaysim.png",
+    "status": "ok(14523)"
+  },
+  {
+    "orgId": "456311",
+    "cdrCode": "oc-energy",
+    "name": "OC Energy Pty Ltd",
+    "logo": "/static/organisations/logos/oc_energy.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/oc_energy.png",
+    "file": "oc_energy.png",
+    "status": "ok(28281)"
+  },
+  {
+    "orgId": "539680",
+    "cdrCode": "macquarie",
+    "name": "Macquarie Bank Limited",
+    "logo": "/static/organisations/logos/macquarie.jpg",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/macquarie.jpg",
+    "file": "macquarie.jpg",
+    "status": "ok(4206)"
+  },
+  {
+    "orgId": "544846",
+    "cdrCode": "sumo-power",
+    "name": "Sumo Power Pty Ltd",
+    "logo": "/static/organisations/logos/sumo.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/sumo.png",
+    "file": "sumo.png",
+    "status": "ok(8729)"
+  },
+  {
+    "orgId": "555268",
+    "cdrCode": "reamped",
+    "name": "ReAmped Energy Pty Ltd",
+    "logo": "/static/organisations/logos/efcc2e0414d559815d5080b40d11ecd1.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/efcc2e0414d559815d5080b40d11ecd1.png",
+    "file": "efcc2e0414d559815d5080b40d11ecd1.png",
+    "status": "ok(5300)"
+  },
+  {
+    "orgId": "562102",
+    "cdrCode": "evergy",
+    "name": "Evergy Pty Ltd",
+    "logo": "/static/organisations/logos/1e07d1e6eae2d98071ff87b922db926e.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/1e07d1e6eae2d98071ff87b922db926e.png",
+    "file": "1e07d1e6eae2d98071ff87b922db926e.png",
+    "status": "ok(9898)"
+  },
+  {
+    "orgId": "586942",
+    "cdrCode": "discover",
+    "name": "Discover Energy Pty Ltd",
+    "logo": "/static/organisations/logos/discover.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/discover.png",
+    "file": "discover.png",
+    "status": "ok(14037)"
+  },
+  {
+    "orgId": "665493",
+    "cdrCode": "cleanpeak",
+    "name": "CleanPeak Energy Retail Pty Ltd",
+    "logo": "/static/organisations/logos/cleanpeak.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/cleanpeak.png",
+    "file": "cleanpeak.png",
+    "status": "ok(12959)"
+  },
+  {
+    "orgId": "686699",
+    "cdrCode": "real-utilities",
+    "name": "Real Utilities Pty Limited",
+    "logo": "/static/organisations/logos/real_utilities.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/real_utilities.png",
+    "file": "real_utilities.png",
+    "status": "ok(9862)"
+  },
+  {
+    "orgId": "700390",
+    "cdrCode": "dc-power",
+    "name": "Powershop Australia Pty Ltd",
+    "logo": "/static/organisations/logos/dcpowerco.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/dcpowerco.png",
+    "file": "dcpowerco.png",
+    "status": "ok(29324)"
+  },
+  {
+    "orgId": "711461",
+    "cdrCode": "locality-planning",
+    "name": "LPE",
+    "logo": "/static/organisations/logos/55de99f8e820b3d8db3de814e5b0da6c.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/55de99f8e820b3d8db3de814e5b0da6c.png",
+    "file": "55de99f8e820b3d8db3de814e5b0da6c.png",
+    "status": "ok(12101)"
+  },
+  {
+    "orgId": "714020",
+    "cdrCode": "seene",
+    "name": "The Embedded Networks Company Pty Ltd",
+    "logo": "/static/organisations/logos/seene.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/seene.png",
+    "file": "seene.png",
+    "status": "ok(8347)"
+  },
+  {
+    "orgId": "719464",
+    "cdrCode": "future-x",
+    "name": "Online Power and Gas Pty Ltd",
+    "logo": "/static/organisations/logos/futurex.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/futurex.png",
+    "file": "futurex.png",
+    "status": "ok(8841)"
+  },
+  {
+    "orgId": "756356",
+    "cdrCode": "flow-systems",
+    "name": "Flow Systems Pty Ltd",
+    "logo": "/static/organisations/logos/flow.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/flow.png",
+    "file": "flow.png",
+    "status": "ok(10436)"
+  },
+  {
+    "orgId": "756360",
+    "cdrCode": "powerclub",
+    "name": "Power Club Limited",
+    "logo": "/static/organisations/logos/powerclub.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/powerclub.png",
+    "file": "powerclub.png",
+    "status": "ok(13955)"
+  },
+  {
+    "orgId": "788632",
+    "cdrCode": "stanwell",
+    "name": "Stanwell Corporation Limited",
+    "logo": "/static/organisations/logos/stanwell.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/stanwell.png",
+    "file": "stanwell.png",
+    "status": "ok(22612)"
+  },
+  {
+    "orgId": "887030",
+    "cdrCode": "cpe-mascot",
+    "name": "CPE Mascot Pty Ltd",
+    "logo": "/static/organisations/logos/6be5f44e7564ead2bec088071373bc83.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/6be5f44e7564ead2bec088071373bc83.png",
+    "file": "6be5f44e7564ead2bec088071373bc83.png",
+    "status": "ok(12959)"
+  },
+  {
+    "orgId": "897829",
+    "cdrCode": "elysian",
+    "name": "Elysian Energy Pty Ltd",
+    "logo": "/static/organisations/logos/04316e35d3fb1dde6d70a6485888beed.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/04316e35d3fb1dde6d70a6485888beed.png",
+    "file": "04316e35d3fb1dde6d70a6485888beed.png",
+    "status": "ok(6891)"
+  },
+  {
+    "orgId": "898484",
+    "cdrCode": "globird",
+    "name": "Globird Energy Pty Ltd",
+    "logo": "/static/organisations/logos/globird.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/globird.png",
+    "file": "globird.png",
+    "status": "ok(14341)"
+  },
+  {
+    "orgId": "1001466",
+    "cdrCode": "solstice",
+    "name": "Solstice Energy Pty Ltd",
+    "logo": "/static/organisations/logos/d0eb4af452fbc3eb0c2e4396ee5269ac.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/d0eb4af452fbc3eb0c2e4396ee5269ac.png",
+    "file": "d0eb4af452fbc3eb0c2e4396ee5269ac.png",
+    "status": "ok(4440)"
+  },
+  {
+    "orgId": "1026340",
+    "cdrCode": "kogan",
+    "name": "Powershop Australia Pty Ltd",
+    "logo": "/static/organisations/logos/kogan.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/kogan.png",
+    "file": "kogan.png",
+    "status": "ok(11537)"
+  },
+  {
+    "orgId": "1028959",
+    "cdrCode": "amber",
+    "name": "Amber Electric Pty Ltd",
+    "logo": "/static/organisations/logos/6537c905dff42c5ecf1d65df90a8e057.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/6537c905dff42c5ecf1d65df90a8e057.png",
+    "file": "6537c905dff42c5ecf1d65df90a8e057.png",
+    "status": "ok(7096)"
+  },
+  {
+    "orgId": "1060386",
+    "cdrCode": "nectr",
+    "name": "Hanwha Energy Retail Australia Pty Ltd",
+    "logo": "/static/organisations/logos/nectr.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/nectr.png",
+    "file": "nectr.png",
+    "status": "ok(10252)"
+  },
+  {
+    "orgId": "1085327",
+    "cdrCode": "ovo-energy",
+    "name": "OVO Energy Pty Ltd",
+    "logo": "/static/organisations/logos/ovo.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/ovo.png",
+    "file": "ovo.png",
+    "status": "ok(11920)"
+  },
+  {
+    "orgId": "1095771",
+    "cdrCode": "arc-energy",
+    "name": "Arc Energy Corporation Pty Ltd",
+    "logo": "/static/organisations/logos/arc.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/arc.png",
+    "file": "arc.png",
+    "status": "ok(20630)"
+  },
+  {
+    "orgId": "1111812",
+    "cdrCode": "metered-energy",
+    "name": "Metered Energy Holdings Pty Ltd",
+    "logo": "/static/organisations/logos/meh.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/meh.png",
+    "file": "meh.png",
+    "status": "ok(16274)"
+  },
+  {
+    "orgId": "1114936",
+    "cdrCode": "active-utilities",
+    "name": "Active Utilities Retail Pty Ltd",
+    "logo": "/static/organisations/logos/0fc6da1797227c2758c074c2506e0c7d.png",
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/0fc6da1797227c2758c074c2506e0c7d.png",
+    "file": "0fc6da1797227c2758c074c2506e0c7d.png",
+    "status": "ok(5986)"
+  },
+  {
+    "orgId": "510250",
+    "cdrCode": null,
+    "name": "iSelect",
+    "logo": "/static/organisations/logos/iselect.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/iselect.png",
+    "file": "iselect.png",
+    "status": "ok(13914)"
+  },
+  {
+    "orgId": "707794",
+    "cdrCode": null,
+    "name": "JG King",
+    "logo": "/static/organisations/logos/jgking.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/jgking.png",
+    "file": "jgking.png",
+    "status": "ok(22772)"
+  },
+  {
+    "orgId": "707796",
+    "cdrCode": null,
+    "name": "Supply Nation",
+    "logo": "/static/organisations/logos/supplynation.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/supplynation.png",
+    "file": "supplynation.png",
+    "status": "ok(21761)"
+  },
+  {
+    "orgId": "707798",
+    "cdrCode": null,
+    "name": "One Big Switch",
+    "logo": "/static/organisations/logos/onebigswitch.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/onebigswitch.png",
+    "file": "onebigswitch.png",
+    "status": "ok(11849)"
+  },
+  {
+    "orgId": "707800",
+    "cdrCode": null,
+    "name": "UBT",
+    "logo": "/static/organisations/logos/ubt.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/ubt.png",
+    "file": "ubt.png",
+    "status": "ok(8321)"
+  },
+  {
+    "orgId": "707804",
+    "cdrCode": null,
+    "name": "SkoolBag",
+    "logo": "/static/organisations/logos/skoolbag.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/skoolbag.png",
+    "file": "skoolbag.png",
+    "status": "ok(6177)"
+  },
+  {
+    "orgId": "713326",
+    "cdrCode": null,
+    "name": "Beevo",
+    "logo": "/static/organisations/logos/beevo.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/beevo.png",
+    "file": "beevo.png",
+    "status": "ok(8482)"
+  },
+  {
+    "orgId": "713330",
+    "cdrCode": null,
+    "name": "Compare & Connect",
+    "logo": "/static/organisations/logos/compareandconnect.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/compareandconnect.png",
+    "file": "compareandconnect.png",
+    "status": "ok(11771)"
+  },
+  {
+    "orgId": "713332",
+    "cdrCode": null,
+    "name": "Make It Cheaper",
+    "logo": "/static/organisations/logos/makeitcheaper.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/makeitcheaper.png",
+    "file": "makeitcheaper.png",
+    "status": "ok(10226)"
+  },
+  {
+    "orgId": "713334",
+    "cdrCode": null,
+    "name": "Connect Now",
+    "logo": "/static/organisations/logos/connectnow.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/connectnow.png",
+    "file": "connectnow.png",
+    "status": "ok(3451)"
+  },
+  {
+    "orgId": "713336",
+    "cdrCode": null,
+    "name": "On The Move",
+    "logo": "/static/organisations/logos/onthemove.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/onthemove.png",
+    "file": "onthemove.png",
+    "status": "ok(13558)"
+  },
+  {
+    "orgId": "713338",
+    "cdrCode": null,
+    "name": "Direct Connect",
+    "logo": "/static/organisations/logos/directconnect.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/directconnect.png",
+    "file": "directconnect.png",
+    "status": "ok(3434)"
+  },
+  {
+    "orgId": "713340",
+    "cdrCode": null,
+    "name": "My Connect",
+    "logo": "/static/organisations/logos/myconnect.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/myconnect.png",
+    "file": "myconnect.png",
+    "status": "ok(19357)"
+  },
+  {
+    "orgId": "713342",
+    "cdrCode": null,
+    "name": "You Compare",
+    "logo": "/static/organisations/logos/youcompare.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/youcompare.png",
+    "file": "youcompare.png",
+    "status": "ok(8019)"
+  },
+  {
+    "orgId": "713344",
+    "cdrCode": null,
+    "name": "Go Switch",
+    "logo": "/static/organisations/logos/goswitch.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/goswitch.png",
+    "file": "goswitch.png",
+    "status": "ok(9884)"
+  },
+  {
+    "orgId": "713346",
+    "cdrCode": null,
+    "name": "Electricity Wizard",
+    "logo": "/static/organisations/logos/electricitywizard.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/electricitywizard.png",
+    "file": "electricitywizard.png",
+    "status": "ok(11792)"
+  },
+  {
+    "orgId": "713348",
+    "cdrCode": null,
+    "name": "iSelect ISE",
+    "logo": "/static/organisations/logos/iselect.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/iselect.png",
+    "file": "iselect.png",
+    "status": "cached"
+  },
+  {
+    "orgId": "713350",
+    "cdrCode": null,
+    "name": "Energy Watch",
+    "logo": "/static/organisations/logos/energywatch.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/energywatch.png",
+    "file": "energywatch.png",
+    "status": "ok(21953)"
+  },
+  {
+    "orgId": "713352",
+    "cdrCode": null,
+    "name": "CPM",
+    "logo": "/static/organisations/logos/cpm.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/cpm.png",
+    "file": "cpm.png",
+    "status": "ok(9832)"
+  },
+  {
+    "orgId": "713354",
+    "cdrCode": null,
+    "name": "Fast Connect",
+    "logo": "/static/organisations/logos/fastconnect.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/fastconnect.png",
+    "file": "fastconnect.png",
+    "status": "ok(7032)"
+  },
+  {
+    "orgId": "713357",
+    "cdrCode": null,
+    "name": "Split It",
+    "logo": "/static/organisations/logos/splitit.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/splitit.png",
+    "file": "splitit.png",
+    "status": "ok(17810)"
+  },
+  {
+    "orgId": "713464",
+    "cdrCode": null,
+    "name": "Compare The Market",
+    "logo": "/static/organisations/logos/comparethemarket.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/comparethemarket.png",
+    "file": "comparethemarket.png",
+    "status": "ok(22909)"
+  },
+  {
+    "orgId": "713468",
+    "cdrCode": null,
+    "name": "Ray White Home Now",
+    "logo": "/static/organisations/logos/raywhitehomenow.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/raywhitehomenow.png",
+    "file": "raywhitehomenow.png",
+    "status": "ok(10290)"
+  },
+  {
+    "orgId": "713470",
+    "cdrCode": null,
+    "name": "Home Now Loan Market",
+    "logo": "/static/organisations/logos/homenowloanmarket.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/homenowloanmarket.png",
+    "file": "homenowloanmarket.png",
+    "status": "ok(5070)"
+  },
+  {
+    "orgId": "713472",
+    "cdrCode": null,
+    "name": "Warwick",
+    "logo": "/static/organisations/logos/warwick.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/warwick.png",
+    "file": "warwick.png",
+    "status": "ok(14082)"
+  },
+  {
+    "orgId": "713474",
+    "cdrCode": null,
+    "name": "Morton",
+    "logo": "/static/organisations/logos/morton.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/morton.png",
+    "file": "morton.png",
+    "status": "ok(13703)"
+  },
+  {
+    "orgId": "716466",
+    "cdrCode": null,
+    "name": "Sonnen",
+    "logo": "/static/organisations/logos/sonnen.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/sonnen.png",
+    "file": "sonnen.png",
+    "status": "ok(7139)"
+  },
+  {
+    "orgId": "716468",
+    "cdrCode": null,
+    "name": "Amber",
+    "logo": "/static/organisations/logos/amber.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/amber.png",
+    "file": "amber.png",
+    "status": "ok(6551)"
+  },
+  {
+    "orgId": "722135",
+    "cdrCode": null,
+    "name": "EcoU Energy",
+    "logo": "/static/organisations/logos/ecouenergy.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/ecouenergy.png",
+    "file": "ecouenergy.png",
+    "status": "ok(15911)"
+  },
+  {
+    "orgId": "722552",
+    "cdrCode": null,
+    "name": "Grouply",
+    "logo": "/static/organisations/logos/grouply.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/grouply.png",
+    "file": "grouply.png",
+    "status": "ok(18584)"
+  },
+  {
+    "orgId": "722554",
+    "cdrCode": null,
+    "name": "RACV",
+    "logo": "/static/organisations/logos/racv.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/racv.png",
+    "file": "racv.png",
+    "status": "ok(19261)"
+  },
+  {
+    "orgId": "741534",
+    "cdrCode": null,
+    "name": "Connect With Us",
+    "logo": "/static/organisations/logos/connectwithus.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/connectwithus.png",
+    "file": "connectwithus.png",
+    "status": "ok(9075)"
+  },
+  {
+    "orgId": "744499",
+    "cdrCode": null,
+    "name": "Move Me In",
+    "logo": "/static/organisations/logos/movemein.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/movemein.png",
+    "file": "movemein.png",
+    "status": "ok(13981)"
+  },
+  {
+    "orgId": "744501",
+    "cdrCode": null,
+    "name": "Movinghub",
+    "logo": "/static/organisations/logos/movinghub.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/movinghub.png",
+    "file": "movinghub.png",
+    "status": "ok(6934)"
+  },
+  {
+    "orgId": "744503",
+    "cdrCode": null,
+    "name": "9Saver",
+    "logo": "/static/organisations/logos/9saver.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/9saver.png",
+    "file": "9saver.png",
+    "status": "ok(10590)"
+  },
+  {
+    "orgId": "744505",
+    "cdrCode": null,
+    "name": "FiftyUp Club",
+    "logo": "/static/organisations/logos/fiftyupclub.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/fiftyupclub.png",
+    "file": "fiftyupclub.png",
+    "status": "ok(26895)"
+  },
+  {
+    "orgId": "765997",
+    "cdrCode": null,
+    "name": "Choice",
+    "logo": "/static/organisations/logos/choice.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/choice.png",
+    "file": "choice.png",
+    "status": "ok(7996)"
+  },
+  {
+    "orgId": "766005",
+    "cdrCode": null,
+    "name": "CIMET",
+    "logo": "/static/organisations/logos/cimet.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/cimet.png",
+    "file": "cimet.png",
+    "status": "ok(10873)"
+  },
+  {
+    "orgId": "766007",
+    "cdrCode": null,
+    "name": "Econnex",
+    "logo": "/static/organisations/logos/econnex.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/econnex.png",
+    "file": "econnex.png",
+    "status": "ok(11747)"
+  },
+  {
+    "orgId": "773767",
+    "cdrCode": null,
+    "name": "Handled",
+    "logo": "/static/organisations/logos/handled.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/handled.png",
+    "file": "handled.png",
+    "status": "ok(22020)"
+  },
+  {
+    "orgId": "778774",
+    "cdrCode": null,
+    "name": "Lifestyle Communities",
+    "logo": "/static/organisations/logos/lifestylecommunities.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/lifestylecommunities.png",
+    "file": "lifestylecommunities.png",
+    "status": "ok(17199)"
+  },
+  {
+    "orgId": "778784",
+    "cdrCode": null,
+    "name": "Master Builders Association NSW",
+    "logo": "/static/organisations/logos/mba_nsw.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/mba_nsw.png",
+    "file": "mba_nsw.png",
+    "status": "ok(47842)"
+  },
+  {
+    "orgId": "778786",
+    "cdrCode": null,
+    "name": "NARTA",
+    "logo": "/static/organisations/logos/narta.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/narta.png",
+    "file": "narta.png",
+    "status": "ok(29342)"
+  },
+  {
+    "orgId": "803394",
+    "cdrCode": null,
+    "name": "Sorted Services",
+    "logo": "/static/organisations/logos/sortedservices.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/sortedservices.png",
+    "file": "sortedservices.png",
+    "status": "ok(10056)"
+  },
+  {
+    "orgId": "873477",
+    "cdrCode": null,
+    "name": "Energy Locals Urban",
+    "logo": "/static/organisations/logos/c7261559ddf08affa02fdcdfcbeaef43.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/c7261559ddf08affa02fdcdfcbeaef43.png",
+    "file": "c7261559ddf08affa02fdcdfcbeaef43.png",
+    "status": "ok(14412)"
+  },
+  {
+    "orgId": "883247",
+    "cdrCode": null,
+    "name": "Chartered Accountants",
+    "logo": "/static/organisations/logos/charteredaccountants.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/charteredaccountants.png",
+    "file": "charteredaccountants.png",
+    "status": "ok(11086)"
+  },
+  {
+    "orgId": "893129",
+    "cdrCode": null,
+    "name": "ForNRG",
+    "logo": "/static/organisations/logos/fornrg.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/fornrg.png",
+    "file": "fornrg.png",
+    "status": "ok(17299)"
+  },
+  {
+    "orgId": "898280",
+    "cdrCode": null,
+    "name": "Schoolzine",
+    "logo": "/static/organisations/logos/schoolzine.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/schoolzine.png",
+    "file": "schoolzine.png",
+    "status": "ok(16335)"
+  },
+  {
+    "orgId": "899650",
+    "cdrCode": null,
+    "name": "Family Travel",
+    "logo": "/static/organisations/logos/familytravel.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/familytravel.png",
+    "file": "familytravel.png",
+    "status": "ok(12059)"
+  },
+  {
+    "orgId": "1045176",
+    "cdrCode": null,
+    "name": "hipages",
+    "logo": "/static/organisations/logos/hipages.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/hipages.png",
+    "file": "hipages.png",
+    "status": "ok(13522)"
+  },
+  {
+    "orgId": "1045230",
+    "cdrCode": null,
+    "name": "Team App",
+    "logo": "/static/organisations/logos/teamapp.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/teamapp.png",
+    "file": "teamapp.png",
+    "status": "ok(36448)"
+  },
+  {
+    "orgId": "1045231",
+    "cdrCode": null,
+    "name": "Residential Connections",
+    "logo": "/static/organisations/logos/addc2a12ffa57076d81d099e4d08cb29.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/addc2a12ffa57076d81d099e4d08cb29.png",
+    "file": "addc2a12ffa57076d81d099e4d08cb29.png",
+    "status": "ok(25416)"
+  },
+  {
+    "orgId": "1045232",
+    "cdrCode": null,
+    "name": "Select and Switch",
+    "logo": "/static/organisations/logos/fa57438ee6fe4fdd375c6106ce1470a3.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/fa57438ee6fe4fdd375c6106ce1470a3.png",
+    "file": "fa57438ee6fe4fdd375c6106ce1470a3.png",
+    "status": "ok(15393)"
+  },
+  {
+    "orgId": "1045233",
+    "cdrCode": null,
+    "name": "Electricity Monster",
+    "logo": "/static/organisations/logos/91e86234ea0820550b0723c38834a382.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/91e86234ea0820550b0723c38834a382.png",
+    "file": "91e86234ea0820550b0723c38834a382.png",
+    "status": "ok(15200)"
+  },
+  {
+    "orgId": "1045234",
+    "cdrCode": null,
+    "name": "Captain Compare",
+    "logo": "/static/organisations/logos/3d55365e32553cdd18c4374304337d24.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/3d55365e32553cdd18c4374304337d24.png",
+    "file": "3d55365e32553cdd18c4374304337d24.png",
+    "status": "ok(25411)"
+  },
+  {
+    "orgId": "1045235",
+    "cdrCode": null,
+    "name": "Ten Ants",
+    "logo": "/static/organisations/logos/095bb4c1b7117beba0bb33609d51c369.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/095bb4c1b7117beba0bb33609d51c369.png",
+    "file": "095bb4c1b7117beba0bb33609d51c369.png",
+    "status": "ok(16814)"
+  },
+  {
+    "orgId": "1045236",
+    "cdrCode": null,
+    "name": "Deal Reveal",
+    "logo": "/static/organisations/logos/78cb2c3fcd980326e079f129138c8e6a.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/78cb2c3fcd980326e079f129138c8e6a.png",
+    "file": "78cb2c3fcd980326e079f129138c8e6a.png",
+    "status": "ok(6228)"
+  },
+  {
+    "orgId": "1045237",
+    "cdrCode": null,
+    "name": "9Saver (Sumo)",
+    "logo": "/static/organisations/logos/bc52ecf6b85ae55921ed865974b288f2.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/bc52ecf6b85ae55921ed865974b288f2.png",
+    "file": "bc52ecf6b85ae55921ed865974b288f2.png",
+    "status": "ok(10590)"
+  },
+  {
+    "orgId": "1045238",
+    "cdrCode": null,
+    "name": "HOOD",
+    "logo": "/static/organisations/logos/c8e834a065c1a8e3feaddaacfb91d760.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/c8e834a065c1a8e3feaddaacfb91d760.png",
+    "file": "c8e834a065c1a8e3feaddaacfb91d760.png",
+    "status": "ok(9138)"
+  },
+  {
+    "orgId": "1045239",
+    "cdrCode": null,
+    "name": "Smarter Communities",
+    "logo": "/static/organisations/logos/0948a8bf97b002e126f87844bc1decde.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/0948a8bf97b002e126f87844bc1decde.png",
+    "file": "0948a8bf97b002e126f87844bc1decde.png",
+    "status": "ok(11647)"
+  },
+  {
+    "orgId": "1045240",
+    "cdrCode": null,
+    "name": "Muval",
+    "logo": "/static/organisations/logos/7fd35fff4486940fad1d839147df6ad1.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/7fd35fff4486940fad1d839147df6ad1.png",
+    "file": "7fd35fff4486940fad1d839147df6ad1.png",
+    "status": "ok(3496)"
+  },
+  {
+    "orgId": "1045241",
+    "cdrCode": null,
+    "name": "Rent.com.au",
+    "logo": "/static/organisations/logos/4f8b98e5c6cdbeb2b52d99b9f0d82de3.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/4f8b98e5c6cdbeb2b52d99b9f0d82de3.png",
+    "file": "4f8b98e5c6cdbeb2b52d99b9f0d82de3.png",
+    "status": "ok(6905)"
+  },
+  {
+    "orgId": "1045242",
+    "cdrCode": null,
+    "name": "Energy Deal ",
+    "logo": "/static/organisations/logos/718a462f86c7b5da0e3f0fa5235e5ff3.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/718a462f86c7b5da0e3f0fa5235e5ff3.png",
+    "file": "718a462f86c7b5da0e3f0fa5235e5ff3.png",
+    "status": "ok(15299)"
+  },
+  {
+    "orgId": "1045243",
+    "cdrCode": null,
+    "name": "Compare Club",
+    "logo": "/static/organisations/logos/138167fd1bffb1467493890b3bd01a05.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/138167fd1bffb1467493890b3bd01a05.png",
+    "file": "138167fd1bffb1467493890b3bd01a05.png",
+    "status": "ok(4371)"
+  },
+  {
+    "orgId": "1045244",
+    "cdrCode": null,
+    "name": "Virtual Watt",
+    "logo": "/static/organisations/logos/3fc0377b33065a2ad11644d416c319c1.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/3fc0377b33065a2ad11644d416c319c1.png",
+    "file": "3fc0377b33065a2ad11644d416c319c1.png",
+    "status": "ok(32072)"
+  },
+  {
+    "orgId": "1045245",
+    "cdrCode": null,
+    "name": "Mindlabz",
+    "logo": "/static/organisations/logos/0f0d22ba3300abf5918090b30042eed9.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/0f0d22ba3300abf5918090b30042eed9.png",
+    "file": "0f0d22ba3300abf5918090b30042eed9.png",
+    "status": "ok(5631)"
+  },
+  {
+    "orgId": "1045246",
+    "cdrCode": null,
+    "name": "One Click Switch",
+    "logo": "/static/organisations/logos/9be29a28c8fe86fa22fb9190b1e034e0.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/9be29a28c8fe86fa22fb9190b1e034e0.png",
+    "file": "9be29a28c8fe86fa22fb9190b1e034e0.png",
+    "status": "ok(7292)"
+  },
+  {
+    "orgId": "1045247",
+    "cdrCode": null,
+    "name": "Chameleon",
+    "logo": "/static/organisations/logos/e4e0d241bedd434bfadfb11578cadf7d.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/e4e0d241bedd434bfadfb11578cadf7d.png",
+    "file": "e4e0d241bedd434bfadfb11578cadf7d.png",
+    "status": "ok(11874)"
+  },
+  {
+    "orgId": "1045248",
+    "cdrCode": null,
+    "name": "Awaken Energy",
+    "logo": "/static/organisations/logos/5f96e2692a2ed3162fb32673d1d20df9.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/5f96e2692a2ed3162fb32673d1d20df9.png",
+    "file": "5f96e2692a2ed3162fb32673d1d20df9.png",
+    "status": "ok(3547)"
+  },
+  {
+    "orgId": "1045249",
+    "cdrCode": null,
+    "name": "Zembl",
+    "logo": "/static/organisations/logos/1555e63d4167e3a3cd9e002cbef8ca83.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/1555e63d4167e3a3cd9e002cbef8ca83.png",
+    "file": "1555e63d4167e3a3cd9e002cbef8ca83.png",
+    "status": "ok(4463)"
+  },
+  {
+    "orgId": "1045250",
+    "cdrCode": null,
+    "name": "Comparable",
+    "logo": "/static/organisations/logos/2ab26c9d27d04a2a9c3f208219970582.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/2ab26c9d27d04a2a9c3f208219970582.png",
+    "file": "2ab26c9d27d04a2a9c3f208219970582.png",
+    "status": "ok(10680)"
+  },
+  {
+    "orgId": "1045251",
+    "cdrCode": null,
+    "name": "Cable Energy",
+    "logo": "/static/organisations/logos/7ef0abcbd45dbd077bda9279f4ea8515.png",
+    "thirdParty": true,
+    "url": "https://www.energymadeeasy.gov.au/static/organisations/logos/7ef0abcbd45dbd077bda9279f4ea8515.png",
+    "file": "7ef0abcbd45dbd077bda9279f4ea8515.png",
+    "status": "ok(7298)"
+  }
+]
