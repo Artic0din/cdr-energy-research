@@ -7,15 +7,15 @@ Compares CDS spec enum values vs values observed in the wild across the full swe
 ### `cl0.rateBlockUType`
 
 **Spec enum** (2): `singleRate`, `timeOfUseRates`
-**Observed**: 8,074 total
-- `singleRate` × 7,924
-- `timeOfUseRates` × 150
+**Observed**: 7,316 total
+- `singleRate` × 7,182
+- `timeOfUseRates` × 134
 
 ### `ec.discounts[].category`
 
 **Spec enum** (4): `PAY_ON_TIME`, `DIRECT_DEBIT`, `GUARANTEED_DISCOUNT`, `OTHER`
-**Observed**: 2,079 total
-- `OTHER` × 1,740
+**Observed**: 1,722 total
+- `OTHER` × 1,383
 - `PAY_ON_TIME` × 259
 - `DIRECT_DEBIT` × 80
 **Spec values NOT observed**: `GUARANTEED_DISCOUNT`
@@ -23,44 +23,44 @@ Compares CDS spec enum values vs values observed in the wild across the full swe
 ### `ec.discounts[].methodUType`
 
 **Spec enum** (4): `percentOfBill`, `percentOfUse`, `fixedAmount`, `percentOverThreshold`
-**Observed**: 3,450 total
-- `percentOfBill` × 1,948
-- `fixedAmount` × 1,112
-- `percentOfUse` × 390
+**Observed**: 3,017 total
+- `percentOfBill` × 1,942
+- `fixedAmount` × 778
+- `percentOfUse` × 297
 **Spec values NOT observed**: `percentOverThreshold`
 
 ### `ec.discounts[].type`
 
 **Spec enum** (3): `CONDITIONAL`, `GUARANTEED`, `OTHER`
-**Observed**: 3,450 total
-- `GUARANTEED` × 1,777
-- `CONDITIONAL` × 1,673
+**Observed**: 3,017 total
+- `GUARANTEED` × 1,678
+- `CONDITIONAL` × 1,339
 **Spec values NOT observed**: `OTHER`
 
 ### `ec.fees[].term`
 
 **Spec enum** (13): `FIXED`, `1_YEAR`, `2_YEAR`, `3_YEAR`, `4_YEAR`, `5_YEAR`, `PERCENT_OF_BILL`, `ANNUAL`, `DAILY`, `WEEKLY`, `MONTHLY`, `BIANNUAL`, `VARIABLE`
-**Observed**: 70,660 total
-- `FIXED` × 49,659
-- `PERCENT_OF_BILL` × 19,791
-- `ANNUAL` × 1,210
+**Observed**: 63,912 total
+- `FIXED` × 44,248
+- `PERCENT_OF_BILL` × 18,785
+- `ANNUAL` × 879
 **Spec values NOT observed**: `1_YEAR`, `2_YEAR`, `3_YEAR`, `4_YEAR`, `5_YEAR`, `BIANNUAL`, `DAILY`, `MONTHLY`, `VARIABLE`, `WEEKLY`
 
 ### `ec.fees[].type`
 
 **Spec enum** (16): `EXIT`, `ESTABLISHMENT`, `LATE_PAYMENT`, `DISCONNECTION`, `DISCONNECT_MOVE_OUT`, `DISCONNECT_NON_PAY`, `RECONNECTION`, `CONNECTION`, `PAYMENT_PROCESSING`, `CC_PROCESSING`, `CHEQUE_DISHONOUR`, `DD_DISHONOUR`, `MEMBERSHIP`, `CONTRIBUTION`, `PAPER_BILL`, `OTHER`
-**Observed**: 70,660 total
-- `CC_PROCESSING` × 16,180
-- `DISCONNECTION` × 10,539
-- `CONNECTION` × 10,154
-- `OTHER` × 6,457
-- `PAYMENT_PROCESSING` × 5,658
-- `LATE_PAYMENT` × 5,588
-- `RECONNECTION` × 4,397
-- `DD_DISHONOUR` × 3,848
-- `DISCONNECT_MOVE_OUT` × 3,005
-- `PAPER_BILL` × 2,051
-- `MEMBERSHIP` × 1,830
+**Observed**: 63,912 total
+- `CC_PROCESSING` × 15,194
+- `DISCONNECTION` × 9,932
+- `CONNECTION` × 8,934
+- `OTHER` × 5,800
+- `PAYMENT_PROCESSING` × 5,648
+- `LATE_PAYMENT` × 4,960
+- `RECONNECTION` × 4,051
+- `DD_DISHONOUR` × 2,771
+- `DISCONNECT_MOVE_OUT` × 2,519
+- `PAPER_BILL` × 1,871
+- `MEMBERSHIP` × 1,279
 - `CHEQUE_DISHONOUR` × 430
 - `DISCONNECT_NON_PAY` × 427
 - `EXIT` × 76
@@ -70,15 +70,15 @@ Compares CDS spec enum values vs values observed in the wild across the full swe
 ### `ec.greenPowerCharges[].scheme`
 
 **Spec enum** (2): `GREENPOWER`, `OTHER`
-**Observed**: 18,613 total
-- `GREENPOWER` × 18,613
+**Observed**: 17,069 total
+- `GREENPOWER` × 17,069
 **Spec values NOT observed**: `OTHER`
 
 ### `ec.greenPowerCharges[].type`
 
 **Spec enum** (6): `FIXED_PER_DAY`, `FIXED_PER_WEEK`, `FIXED_PER_MONTH`, `FIXED_PER_UNIT`, `PERCENT_OF_USE`, `PERCENT_OF_BILL`
-**Observed**: 18,613 total
-- `FIXED_PER_UNIT` × 17,435
+**Observed**: 17,069 total
+- `FIXED_PER_UNIT` × 15,891
 - `FIXED_PER_WEEK` × 1,079
 - `FIXED_PER_DAY` × 80
 - `PERCENT_OF_USE` × 19
@@ -87,29 +87,29 @@ Compares CDS spec enum values vs values observed in the wild across the full swe
 ### `ec.incentives[].category`
 
 **Spec enum** (3): `GIFT`, `ACCOUNT_CREDIT`, `OTHER`
-**Observed**: 9,710 total
-- `OTHER` × 9,329
+**Observed**: 9,206 total
+- `OTHER` × 8,848
 - `GIFT` × 201
-- `ACCOUNT_CREDIT` × 180
+- `ACCOUNT_CREDIT` × 157
 
 ### `ec.paymentOption[]`
 
 **Spec enum** (5): `PAPER_BILL`, `CREDIT_CARD`, `DIRECT_DEBIT`, `BPAY`, `OTHER`
-**Observed**: 39,682 total
-- `DIRECT_DEBIT` × 9,808
-- `PAPER_BILL` × 8,331
-- `CREDIT_CARD` × 8,096
-- `BPAY` × 7,604
-- `OTHER` × 5,843
+**Observed**: 36,067 total
+- `DIRECT_DEBIT` × 8,858
+- `PAPER_BILL` × 7,852
+- `CREDIT_CARD` × 7,326
+- `BPAY` × 6,834
+- `OTHER` × 5,197
 
 ### `ec.pricingModel`
 
 **Spec enum** (7): `SINGLE_RATE`, `SINGLE_RATE_CONT_LOAD`, `TIME_OF_USE`, `TIME_OF_USE_CONT_LOAD`, `FLEXIBLE`, `FLEXIBLE_CONT_LOAD`, `QUOTA`
-**Observed**: 13,493 total
-- `TIME_OF_USE_CONT_LOAD` × 4,632
-- `SINGLE_RATE_CONT_LOAD` × 3,350
-- `TIME_OF_USE` × 2,786
-- `SINGLE_RATE` × 2,514
+**Observed**: 12,141 total
+- `TIME_OF_USE_CONT_LOAD` × 4,258
+- `SINGLE_RATE_CONT_LOAD` × 2,966
+- `TIME_OF_USE` × 2,556
+- `SINGLE_RATE` × 2,150
 - `FLEXIBLE` × 119
 - `FLEXIBLE_CONT_LOAD` × 92
 **Spec values NOT observed**: `QUOTA`
@@ -117,8 +117,8 @@ Compares CDS spec enum values vs values observed in the wild across the full swe
 ### `ec.termType`
 
 **Spec enum** (7): `1_YEAR`, `2_YEAR`, `3_YEAR`, `4_YEAR`, `5_YEAR`, `ONGOING`, `OTHER`
-**Observed**: 3,929 total
-- `ONGOING` × 2,931
+**Observed**: 3,912 total
+- `ONGOING` × 2,914
 - `1_YEAR` × 620
 - `OTHER` × 378
 **Spec values NOT observed**: `2_YEAR`, `3_YEAR`, `4_YEAR`, `5_YEAR`
@@ -126,90 +126,90 @@ Compares CDS spec enum values vs values observed in the wild across the full swe
 ### `ec.timeZone`
 
 **Spec enum** (2): `LOCAL`, `AEST`
-**Observed**: 12,099 total
-- `LOCAL` × 9,689
-- `AEST` × 2,410
+**Observed**: 10,938 total
+- `LOCAL` × 8,977
+- `AEST` × 1,961
 
 ### `fit0.payerType`
 
 **Spec enum** (2): `GOVERNMENT`, `RETAILER`
-**Observed**: 13,038 total
-- `RETAILER` × 12,885
-- `GOVERNMENT` × 153
+**Observed**: 11,716 total
+- `RETAILER` × 11,575
+- `GOVERNMENT` × 141
 
 ### `fit0.scheme`
 
 **Spec enum** (4): `PREMIUM`, `CURRENT`, `VARIABLE`, `OTHER`
-**Observed**: 13,038 total
-- `OTHER` × 8,692
-- `CURRENT` × 3,801
-- `VARIABLE` × 545
+**Observed**: 11,716 total
+- `OTHER` × 7,809
+- `CURRENT` × 3,443
+- `VARIABLE` × 464
 **Spec values NOT observed**: `PREMIUM`
 
 ### `fit0.tariffUType`
 
 **Spec enum** (2): `singleTariff`, `timeVaryingTariffs`
-**Observed**: 13,038 total
-- `singleTariff` × 11,626
-- `timeVaryingTariffs` × 1,412
+**Observed**: 11,716 total
+- `singleTariff` × 10,545
+- `timeVaryingTariffs` × 1,171
 
 ### `plan.customerType`
 
 **Spec enum** (2): `RESIDENTIAL`, `BUSINESS`
-**Observed**: 13,493 total
-- `RESIDENTIAL` × 13,493
+**Observed**: 12,141 total
+- `RESIDENTIAL` × 12,141
 **Spec values NOT observed**: `BUSINESS`
 
 ### `plan.fuelType`
 
 **Spec enum** (3): `ELECTRICITY`, `GAS`, `DUAL`
-**Observed**: 13,493 total
-- `ELECTRICITY` × 13,493
+**Observed**: 12,141 total
+- `ELECTRICITY` × 12,141
 **Spec values NOT observed**: `DUAL`, `GAS`
 
 ### `plan.type`
 
 **Spec enum** (3): `STANDING`, `MARKET`, `REGULATED`
-**Observed**: 13,493 total
-- `MARKET` × 11,263
-- `STANDING` × 2,230
+**Observed**: 12,141 total
+- `MARKET` × 10,199
+- `STANDING` × 1,942
 **Spec values NOT observed**: `REGULATED`
 
 ### `tou.days[]`
 
 **Spec enum** (7): `MON`, `TUE`, `WED`, `THU`, `FRI`, `SAT`, `SUN`
-**Observed**: 48,787 total
-- `MON` × 7,629
-- `TUE` × 7,629
-- `WED` × 7,629
-- `THU` × 7,629
-- `FRI` × 7,629
-- `SAT` × 5,321
-- `SUN` × 5,321
+**Observed**: 44,911 total
+- `MON` × 7,025
+- `TUE` × 7,025
+- `WED` × 7,025
+- `THU` × 7,025
+- `FRI` × 7,025
+- `SAT` × 4,893
+- `SUN` × 4,893
 
 ### `tp.timeOfUseRates[].type`
 
 **Spec enum** (5): `PEAK`, `OFF_PEAK`, `SHOULDER`, `SHOULDER1`, `SHOULDER2`
-**Observed**: 19,101 total
-- `OFF_PEAK` × 7,653
-- `PEAK` × 7,602
-- `SHOULDER` × 3,770
-- `SHOULDER1` × 74
-- `SHOULDER2` × 2
+**Observed**: 17,600 total
+- `OFF_PEAK` × 7,067
+- `PEAK` × 6,998
+- `SHOULDER` × 3,467
+- `SHOULDER1` × 68
+**Spec values NOT observed**: `SHOULDER2`
 
 ### `tp0.dailySupplyChargeType`
 
 **Spec enum** (2): `SINGLE`, `BAND`
-**Observed**: 13,493 total
-- `SINGLE` × 13,493
+**Observed**: 12,141 total
+- `SINGLE` × 12,141
 **Spec values NOT observed**: `BAND`
 
 ### `tp0.rateBlockUType`
 
 **Spec enum** (3): `singleRate`, `timeOfUseRates`, `demandCharges`
-**Observed**: 13,493 total
-- `timeOfUseRates` × 7,629
-- `singleRate` × 5,864
+**Observed**: 12,141 total
+- `timeOfUseRates` × 7,025
+- `singleRate` × 5,116
 **Spec values NOT observed**: `demandCharges`
 
 ### `tp0.timeZone`
