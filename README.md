@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="assets/logo-wordmark.png" alt="cdr-energy-research" width="640">
+</p>
+
+<p align="center">
+  <em>AU Consumer Data Right energy reference data research and tooling</em>
+</p>
+
+---
+
 # CDR Energy Research
 
 Comprehensive research and tooling for the Australian Consumer Data Right (CDR) Energy Product Reference Data (PRD) APIs. Used to power [PriceHawk](../pricehawk/) (Home Assistant integration) and inform other energy projects.
