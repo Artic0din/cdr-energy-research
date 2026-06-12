@@ -4,6 +4,9 @@ All notable changes to this research repo.
 
 ## [Unreleased]
 
+### Changed
+- Documentation audit (2026-06-12): corrected v2 sweep numbers below to match the final cold-cache rerun (commit f26a656); README repo tree now lists `docs/brand-assets.md` and `data/logos/`; README cache note updated; added `AGENTS.md` with repo-specific agent rules.
+
 ### Added
 - Initial repository structure with docs/, data/, scripts/, cache/
 - v1 shape catalog (78 retailers, 10,266 plans, 1,724 signatures) at `docs/shape-catalog-v1.md`
@@ -27,14 +30,16 @@ All notable changes to this research repo.
 - EV-overlay plans (AGL Night Saver EV, Origin 360 EV, etc.) are mis-classified — workaround: detect zero rates in TOU plans
 - Solar Sharer Offer (SSO) plans land 1 July 2026 with no spec value (SM#719)
 
-## v2 sweep results (2026-05-16)
+## [2026-05-16] — v2 sweep results
+
+Numbers below are from the final cold-cache rerun (commit f26a656), which regenerated `docs/shape-catalog-v2.md`.
 
 - 117/117 retailers reachable (vs 78 in v1)
 - 17,779 plans fetched (+73% vs v1)
-- 5,087 distinct shape signatures (3× v1's 1,724)
-- 148 EV-overlay candidates (zero-rate within TOU plans) — SM#710 concrete count
+- 4,891 distinct shape signatures (2.8× v1's 1,724)
+- 144 EV-overlay candidates (zero-rate within TOU plans) — SM#710 concrete count
 - 0 failures across 17,779 plan detail fetches
-- 7.7 min wall-clock (cache-warm)
+- 1 h 40 m wall-clock (cold cache; warm re-runs take minutes)
 - 167 MB cache
 
 ### Enum surprises (vs spec)

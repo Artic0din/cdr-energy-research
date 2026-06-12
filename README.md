@@ -16,18 +16,20 @@ cdr-energy-research/
 │   ├── enums-reference.md         spec enum values vs observed (with ⚠ flags)
 │   ├── upcoming-changes.md        15 open CDS standards-maintenance Energy issues
 │   ├── registry-comparison.md     EME refdata2 vs AER PDF vs jxeeno vs ACCC
-│   └── operations.md              runbook for re-running sweeps
+│   ├── operations.md              runbook for re-running sweeps
+│   └── brand-assets.md            logo cache layout + brand lookup HOWTO
 ├── data/
 │   ├── aer-base-uris-jan2026.pdf       authoritative retailer registry
 │   ├── aer-fact-sheet-feb2025.docx     AER guide
 │   ├── eme-refdata.json                Energy Made Easy refdata2 snapshot
 │   ├── retailer-index.json             merged retailer index (script output)
-│   └── registry-comparison.json        registry diff (script output)
+│   ├── registry-comparison.json        registry diff (script output)
+│   └── logos/                          189 retailer/broker logos + _manifest.json
 ├── scripts/
 │   ├── cdr_probe_v1.py            initial sample probe (5 plans/retailer)
 │   ├── cdr_full_sweep_v1.py       first full sweep
 │   └── cdr_full_sweep_v2.py       comprehensive sweep w/ EME refdata2 + ?brand=
-└── cache/v1                       symlink to /tmp/cdr-cache (149 MB raw responses)
+└── cache/                         v1 symlink + v2 dir → /tmp (ephemeral, ~167 MB after a full v2 run; regenerate with scripts/cdr_full_sweep_v2.py)
 ```
 
 ## TL;DR — where to start
@@ -83,4 +85,5 @@ cdr-energy-research/
 
 ## Status
 
+**Paused.** Last sweep and findings update: 2026-05-16.
 **Private research repo.** Not for public publication without legal review (AER/CDR data is public but operational details should be reviewed).
