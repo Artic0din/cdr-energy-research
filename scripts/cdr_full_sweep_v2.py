@@ -29,7 +29,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from typing import Any
 
-REPO_ROOT = "/Users/ryanfoyle/Claude/energy/cdr-energy-research"
+REPO_ROOT = "/Users/ryanfoyle/Development/cdr-energy-research"
 CACHE_DIR = "/tmp/cdr-cache"
 PROGRESS_PATH = os.path.join(CACHE_DIR, "_progress_v2.json")
 FAILED_PATH = os.path.join(CACHE_DIR, "_failed_v2.jsonl")
