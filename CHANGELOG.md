@@ -5,6 +5,19 @@ All notable changes to this research repo.
 ## [Unreleased]
 
 ### Added
+- Catalogue publish pipeline: `scripts/build_catalogue.py` trims the swept cache
+  to a compact residential-electricity catalogue (`dist/catalogue.json.gz` +
+  `dist/manifest.json`, schema_version 1) for the PriceHawk HA integration to
+  download and rank against. Stdlib-only; reuses the v2 sweep's
+  `is_residential_electricity`/`load_json` helpers.
+- Daily `.github/workflows/publish-catalogue.yml` (03:00 AEST + manual dispatch):
+  runs the national sweep, builds the catalogue, and publishes it as a GitHub
+  Release with a dated tag and `make_latest: true` so the stable
+  `releases/latest/download/catalogue.json.gz` URL always resolves to the newest
+  build. Refuses to publish an empty catalogue (0-plan sweep fails the job).
+- `tests/test_build_catalogue.py` + `requirements-dev.txt` (pytest): residential
+  filtering, trimmed-entry schema, `electricityContract` pass-through, gzip
+  round-trip, manifest counts, dedup, and the empty-cache guard.
 - Initial repository structure with docs/, data/, scripts/, cache/
 - v1 shape catalog (78 retailers, 10,266 plans, 1,724 signatures) at `docs/shape-catalog-v1.md`
 - v2 sweep script using EME refdata2 (117 retailers) + comprehensive field probe at `scripts/cdr_full_sweep_v2.py`

@@ -1,0 +1,77 @@
+name: Publish CDR catalogue
+
+# Sweeps every Australian residential-electricity plan from the CDR endpoints,
+# trims it to a compact catalogue, and publishes it as a GitHub Release asset.
+# The stable URL
+#   https://github.com/Artic0din/cdr-energy-research/releases/latest/download/catalogue.json.gz
+# always resolves to the newest build (each run also keeps a dated tag).
+
+on:
+  schedule:
+    # 03:00 AEST (UTC+10) daily. AEST has no DST; the offset is fixed.
+    - cron: "0 17 * * *"
+  workflow_dispatch:
+
+# Least privilege: only the permission needed to create a Release.
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-catalogue
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # The national sweep is polite/rate-limited (~8 min cache-warm, ~33 min
+    # cold). Generous ceiling so a slow run completes; never hangs forever.
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # The sweep and the builder are stdlib-only — no pip install step.
+      - name: Run national CDR sweep
+        run: python scripts/cdr_full_sweep_v2.py
+
+      - name: Build compact catalogue
+        # build_catalogue.py exits non-zero if the sweep yielded 0 qualifying
+        # plans, which fails this step and stops the publish — an empty
+        # catalogue is never released.
+        run: python scripts/build_catalogue.py
+
+      - name: Derive release tag and body
+        id: meta
+        run: |
+          set -euo pipefail
+          tag="catalogue-$(date -u +%Y%m%d)"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          {
+            echo "body<<EOF"
+            echo "National CDR residential-electricity plan catalogue."
+            echo ""
+            echo '```json'
+            cat dist/manifest.json
+            echo '```'
+            echo ""
+            echo "Stable download (always newest):"
+            echo "https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/catalogue.json.gz"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          body: ${{ steps.meta.outputs.body }}
+          make_latest: true
+          files: |
+            dist/catalogue.json.gz
+            dist/manifest.json
