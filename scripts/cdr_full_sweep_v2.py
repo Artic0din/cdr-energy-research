@@ -29,7 +29,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from typing import Any
 
-REPO_ROOT = "/Users/ryanfoyle/Development/cdr-energy-research"
+# Repo root derived from this script's location (scripts/ is one level down),
+# so the sweep works in any checkout (CI, a fresh clone) without a hardcoded path.
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE_DIR = "/tmp/cdr-cache"
 PROGRESS_PATH = os.path.join(CACHE_DIR, "_progress_v2.json")
 FAILED_PATH = os.path.join(CACHE_DIR, "_failed_v2.jsonl")
