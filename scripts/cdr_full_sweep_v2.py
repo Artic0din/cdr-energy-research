@@ -3,7 +3,7 @@
 
 Improvements over v1:
 - Source registry from Energy Made Easy refdata2 (117 orgs, vs jxeeno's 78)
-- Use ?brand=<cdrCode> to disambiguate plans on shared base URIs
+- Use ?brand=<cdrBrand> to disambiguate plans on shared base URIs
 - Probe ALL fields (top-level plan, contract, all sub-lists, deep TOU windows)
 - Capture enum value distributions across all plans
 - Output comprehensive catalog: shape signatures + retailer matrix +
@@ -153,24 +153,32 @@ def fetch_eme_refdata() -> dict:
 def build_retailer_list(refdata: dict) -> list[dict]:
     """Returns deduped list of retailer entries.
 
-    Dedupes by cdrCode (collapses duplicate org records like
-    Origin/Electricity + Origin/LPG + Origin/Retail Limited all sharing
-    cdrCode=origin). Drops orgs that have NO electricityBillURL AND a
+    Dedupes by cdrBrand, NOT cdrCode. cdrBrand is the brand identity the AER
+    registry guarantees is distinct per retailer; cdrCode only identifies the
+    base URI and is SHARED by co-hosted brands. Deduping by cdrCode would
+    collapse every co-hosted brand on a shared base into one entry (e.g.
+    Indigo / Cooperative / RAA / Energy Locals all carry cdrCode=energy-locals)
+    and silently drop the rest. Deduping by cdrBrand keeps each co-hosted brand
+    while still collapsing genuine duplicate org records that share one brand
+    (e.g. Origin's Electricity + LPG + Retail Limited records all carry
+    cdrBrand=origin). Drops orgs that have NO electricityBillURL AND a
     gasBillURL (gas-only retailers — we only care about electricity).
     """
     orgs = refdata.get("data", {}).get("organisations", {})
-    seen_cdr_codes: set[str] = set()
+    seen_brands: set[str] = set()
     out = []
     for org_id, o in orgs.items():
         cdr_code = o.get("cdrCode")
         if not cdr_code:
             continue
-        if cdr_code in seen_cdr_codes:
+        # cdrBrand is the dedupe key; fall back to cdrCode only if absent.
+        cdr_brand = o.get("cdrBrand") or cdr_code
+        if cdr_brand in seen_brands:
             continue
         # Skip gas-only retailers (no electricityBillURL, has gasBillURL)
         if not o.get("electricityBillURL") and o.get("gasBillURL"):
             continue
-        seen_cdr_codes.add(cdr_code)
+        seen_brands.add(cdr_brand)
         out.append({
             "orgId": org_id,
             "cdrCode": cdr_code,
@@ -276,8 +284,9 @@ def process_retailer(r: dict, shared_base_brands: dict) -> dict:
     slug = r["slug"]
     base = r["baseUri"]
     cdr_code = r["cdrCode"]
+    cdr_brand = r["cdrBrand"]
     stats = {
-        "cdrCode": cdr_code, "slug": slug, "base": base,
+        "cdrCode": cdr_code, "cdrBrand": cdr_brand, "slug": slug, "base": base,
         "tradingName": r.get("tradingName"),
         "orgName": r.get("orgName"),
         "shared_base": len(shared_base_brands.get(base, [])) > 1,
@@ -285,8 +294,10 @@ def process_retailer(r: dict, shared_base_brands: dict) -> dict:
         "plans_fetched": 0, "plans_failed": 0, "list_error": None,
     }
     use_brand_filter = stats["shared_base"]
+    # On a shared base every co-hosted brand carries the SAME cdrCode, so the
+    # plan-list filter must be cdrBrand to isolate this brand's plans.
     plans, list_err = fetch_plan_list(
-        base, slug, brand_filter=cdr_code if use_brand_filter else None
+        base, slug, brand_filter=cdr_brand if use_brand_filter else None
     )
     if list_err and not plans:
         stats["list_error"] = list_err
@@ -813,10 +824,11 @@ def main() -> None:
     retailers = build_retailer_list(refdata)
     print(f"  {len(retailers)} CDR-enrolled retailers", file=sys.stderr, flush=True)
 
-    # Map shared base URIs
+    # Map shared base URIs to the brands hosted on them. Keyed by cdrBrand
+    # because co-hosted brands share a cdrCode — only cdrBrand distinguishes them.
     base_to_brands = defaultdict(list)
     for r in retailers:
-        base_to_brands[r["baseUri"]].append(r["cdrCode"])
+        base_to_brands[r["baseUri"]].append(r["cdrBrand"])
     n_unique_bases = len(base_to_brands)
     n_shared = sum(1 for v in base_to_brands.values() if len(v) > 1)
     print(f"  {n_unique_bases} unique base URIs, {n_shared} shared", file=sys.stderr, flush=True)
@@ -856,11 +868,9 @@ def main() -> None:
     sig_to_tokens: dict[str, list[str]] = {}
     enum_global: dict[str, list] = defaultdict(list)
     surprises: list[str] = []
-    surprise_seen: set[str] = set()
     ev_overlay_plans: list[tuple[str, str, str]] = []
 
     n_processed = 0
-    slug_to_stat = {s["slug"]: s for s in stats}
     for slug in os.listdir(CACHE_DIR):
         if slug.startswith("_"):
             continue

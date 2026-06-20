@@ -4,6 +4,11 @@ All notable changes to this research repo.
 
 ## [Unreleased]
 
+### Fixed
+- v2 sweep now honors the documented `cdrBrand` contract: `build_retailer_list` dedupes by `cdrBrand` (was `cdrCode`, which collapsed co-hosted brands such as Indigo/Cooperative/RAA into one and dropped the rest), and `process_retailer` filters shared endpoints with `?brand=<cdrBrand>` (was `cdrCode`, which could not disambiguate co-hosted brands).
+  Corrected the shared-endpoint figures in README.md and AGENTS.md to 109 retailers / 103 unique base URIs / 3 shared base URIs hosting 9 brands (from the committed `data/eme-refdata.json`), pointed the README cache note at the real `/tmp/cdr-cache` location, and fixed `?brand=<cdrCode>` to `?brand=<cdrBrand>` in `docs/api-reference.md` and `docs/registry-comparison.md`.
+  The committed `data/registry-comparison.json` and `docs/shape-catalog-v2.md` were generated before this fix and must be regenerated (`scripts/cdr_full_sweep_v2.py`) for their counts to reflect the corrected dedup/filter.
+
 ### Changed
 - Documentation audit (2026-06-12): corrected v2 sweep numbers below to match the final cold-cache rerun (commit f26a656); README repo tree now lists `docs/brand-assets.md` and `data/logos/`; README cache note updated; added `AGENTS.md` with repo-specific agent rules.
 

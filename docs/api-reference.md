@@ -21,7 +21,7 @@ Richest metadata source: EME refdata2 (`https://api.energymadeeasy.gov.au/refdat
 | `/radian/` | iO Energy, Radian Energy |
 | `/future-x/` | Future X Power (cdrCode=`future-x`), Future X Power (cdrCode=`sunswitch`) |
 
-→ When fetching from a shared endpoint, **use `?brand=<cdrCode>`** to filter to one brand's plans.
+→ When fetching from a shared endpoint, **use `?brand=<cdrBrand>`** (NOT `<cdrCode>`) to filter to one brand's plans: co-hosted brands share one `cdrCode`, so only `cdrBrand` isolates a single brand's plans.
 
 ## Endpoints
 
