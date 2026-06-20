@@ -40,11 +40,11 @@ Numbers below are from the final cold-cache rerun (commit f26a656), which regene
 - 144 EV-overlay candidates (zero-rate within TOU plans) — SM#710 concrete count
 - 0 failures across 17,779 plan detail fetches
 - 1 h 40 m wall-clock (cold cache; warm re-runs take minutes)
-- 167 MB cache
+- 111.5 MB cache
 
 ### Enum surprises (vs spec)
 
-- `discounts[].type` spec value `OTHER` **NEVER used** in 3,450 obs
+- `discounts[].type` spec value `OTHER` **NEVER used** in 3,017 obs
 - `discounts[].methodUType` spec value `percentOverThreshold` **NEVER used**
 - `discounts[].category` spec value `GUARANTEED_DISCOUNT` **NEVER used**
 - `fees[].term` 10 of 13 spec values **NEVER used** (only FIXED, PERCENT_OF_BILL, ANNUAL observed)

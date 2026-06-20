@@ -13,7 +13,7 @@ Not for public publication without legal review.
 
 - PRD API is public, no auth — but be polite: max 1 request/second per retailer; 12-way parallelism across retailers is acceptable.
 - Spec versions are load-bearing: plan list uses `x-v: 1`, plan detail uses `x-v: 3` (v2 retired March 2025). Verify before changing.
-- Shared base URIs: 20 base URIs serve multiple brands — always pass `?brand=<cdrCode>` on shared endpoints.
+- Shared base URIs: 20 base URIs serve multiple brands — always pass a brand filter on shared endpoints. Use `?brand=<cdrBrand>`, NOT `cdrCode`: on a shared base every co-hosted brand carries the *same* `cdrCode` (e.g. Indigo, Cooperative, RAA and Energy Locals all have `cdrCode=energy-locals`) but a *distinct* `cdrBrand` (`indigo`, `cooperative`, `raa`, `energy-locals`). Only `cdrBrand` disambiguates the brands sharing one endpoint; filtering by `cdrCode` would return every co-hosted brand's plans.
 - `tariffPeriod[0].dailySupplyCharge` is GST-EXCLUSIVE; most other AmountStrings are GST-inclusive. Do not "fix" this asymmetry.
 
 ## Data and cache

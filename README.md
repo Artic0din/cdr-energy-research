@@ -29,7 +29,7 @@ cdr-energy-research/
 │   ├── cdr_probe_v1.py            initial sample probe (5 plans/retailer)
 │   ├── cdr_full_sweep_v1.py       first full sweep
 │   └── cdr_full_sweep_v2.py       comprehensive sweep w/ EME refdata2 + ?brand=
-└── cache/                         v1 symlink + v2 dir → /tmp (ephemeral, ~167 MB after a full v2 run; regenerate with scripts/cdr_full_sweep_v2.py)
+└── cache/                         v1 symlink + v2 dir → /tmp (ephemeral, ~111.5 MB after a full v2 run; regenerate with scripts/cdr_full_sweep_v2.py)
 ```
 
 ## TL;DR — where to start
@@ -45,15 +45,15 @@ cdr-energy-research/
 | Purpose | Endpoint | Headers | Notes |
 |---|---|---|---|
 | Retailer registry | `GET https://api.energymadeeasy.gov.au/refdata2?keys=organisations,thirdParties` | none | 117 orgs + 72 brokers, no auth |
-| Plan list | `GET {base}/cds-au/v1/energy/plans?fuelType=ELECTRICITY&type=ALL&effective=CURRENT&page-size=1000&brand={cdrCode}&updated-since={iso}` | `x-v: 1` | `brand=` for shared endpoints; `updated-since=` for incremental |
+| Plan list | `GET {base}/cds-au/v1/energy/plans?fuelType=ELECTRICITY&type=ALL&effective=CURRENT&page-size=1000&brand={cdrBrand}&updated-since={iso}` | `x-v: 1` | `brand={cdrBrand}` (NOT `cdrCode`) for shared endpoints; `updated-since=` for incremental |
 | Plan detail | `GET {base}/cds-au/v1/energy/plans/{planId}` | `x-v: 3` | v2 retired Mar 2025 |
 
-`{base}` is `cdr.energymadeeasy.gov.au/<cdrCode>`. AER PDF is the authoritative source; **20 unique base URIs are SHARED across multiple brands** (Energy Locals hosts ARCLINE / Cooperative / RAA / Sonnen / Indigo etc; OVO Energy hosts MYOB OVO + OVO Energy + OVO Energy CTM).
+`{base}` is `cdr.energymadeeasy.gov.au/<cdrCode>`. AER PDF is the authoritative source; **20 unique base URIs are SHARED across multiple brands** (Energy Locals hosts ARCLINE / Cooperative / RAA / Sonnen / Indigo etc; OVO Energy hosts MYOB OVO + OVO Energy + OVO Energy CTM). Co-hosted brands share one `cdrCode` but each has a distinct `cdrBrand`, so disambiguate with `?brand=<cdrBrand>` — filtering by `cdrCode` returns every co-hosted brand's plans.
 
 ## Headline findings from the sweeps
 
 - **117 CDR-enrolled retailers** (vs 78 in jxeeno's GitHub registry)
-- **20 shared base URIs** — multiple brands share endpoints; `?brand=<cdrCode>` disambiguates
+- **20 shared base URIs** — multiple brands share endpoints; `?brand=<cdrBrand>` disambiguates (co-hosted brands share a `cdrCode`, so `cdrBrand` is the distinguishing filter)
 - **10,266 residential ELEC plans** observed in v1 sweep (78 retailers)
 - **1,724 distinct shape signatures** — extreme long tail; top 30 sigs cover only 13% of plans
 - **0 retailers 404 on plan detail** when listed — reliability is excellent
