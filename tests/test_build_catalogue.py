@@ -1,10 +1,15 @@
 """Tests for ``scripts/build_catalogue.py``.
 
-The fixture cache mirrors the layout ``cdr_full_sweep_v2.fetch_plan_detail``
-writes: ``{cache_dir}/{slug}/{planId}.json``, each file the full CDR API
-response (a ``{"data": {...}, "meta": {...}, "links": {...}}`` envelope). The
-residential-electricity plan-detail envelopes are copied verbatim from
-PriceHawk's real CDR fixtures; the GAS and BUSINESS envelopes are derived from a
+The fixture cache mirrors the layout ``cdr_full_sweep_v2`` writes:
+``{cache_dir}/{slug}/{planId}.json`` (plan details, each a full CDR
+``{"data": {...}, "meta": {...}, "links": {...}}`` envelope) plus
+``{cache_dir}/{slug}/_planlist*.json`` (the live plan list the sweep cached for
+that retailer). The builder keeps only plans still present in the current list,
+then narrows to residential-electricity plans.
+
+The residential-electricity plan-detail envelopes are vendored into
+``tests/fixtures/cdr`` (self-contained, no external paths) — small copies of
+PriceHawk's real CDR fixtures. The GAS and BUSINESS envelopes are derived from a
 real one with the discriminating field flipped, so both must be excluded.
 """
 from __future__ import annotations
@@ -18,7 +23,7 @@ import pytest
 
 import build_catalogue
 
-FIXTURE_SRC = "/Users/ryanfoyle/Development/pricehawk-rebuild/tests/fixtures/cdr"
+FIXTURE_SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "cdr")
 RESIDENTIAL_FIXTURES = (
     "globird_single_rate.json",
     "globird_tou_controlled_load.json",
@@ -65,11 +70,38 @@ def _write_cached_plan(cache_dir: str, slug: str, envelope: dict) -> None:
         json.dump(envelope, f)
 
 
+def _append_to_planlist(cache_dir: str, slug: str, plan_id: str) -> None:
+    """Add ``plan_id`` to the slug's ``_planlist.json`` (the live plan list).
+
+    Mirrors what ``cdr_full_sweep_v2.fetch_plan_list`` caches: a JSON list of
+    plan summaries, each with a ``planId``. The builder reads these to learn each
+    retailer's CURRENT plans and ignore stale cached details.
+    """
+    slug_dir = os.path.join(cache_dir, slug)
+    os.makedirs(slug_dir, exist_ok=True)
+    path = os.path.join(slug_dir, "_planlist.json")
+    existing = []
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            existing = json.load(f)
+    existing.append({"planId": plan_id})
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(existing, f)
+
+
+def _write_cached_plan_listed(cache_dir: str, slug: str, envelope: dict) -> None:
+    """Cache a plan detail AND record it in the slug's current plan list."""
+    _write_cached_plan(cache_dir, slug, envelope)
+    _append_to_planlist(cache_dir, slug, envelope["data"]["planId"])
+
+
 @pytest.fixture()
 def fixture_cache(tmp_path) -> str:
     """A swept-cache dir: 3 residential-electricity plans + 1 gas + 1 business.
 
     Only the 3 residential-electricity plans should survive into the catalogue.
+    Every plan is recorded in its retailer's current plan list, so the current-
+    list filter keeps them all.
     """
     cache_dir = os.path.join(str(tmp_path), "cdr-cache")
 
@@ -77,35 +109,30 @@ def fixture_cache(tmp_path) -> str:
     for name in RESIDENTIAL_FIXTURES:
         env = _envelope(os.path.join(FIXTURE_SRC, name))
         slug = env["data"]["brand"]
-        _write_cached_plan(cache_dir, slug, env)
+        _write_cached_plan_listed(cache_dir, slug, env)
         if base is None:
             base = env
 
     assert base is not None, "no residential fixtures loaded"
 
-    # GAS plan — derived from a real envelope, fuelType flipped. Excluded by
-    # is_residential_electricity (fuelType != ELECTRICITY).
+    # GAS plan — derived from a real envelope, fuelType flipped. Listed as
+    # current, but excluded by is_residential_electricity (fuelType != ELECTRICITY).
     gas = copy.deepcopy(base)
     gas["data"]["planId"] = "GAS-EXCLUDE-001@EME"
     gas["data"]["fuelType"] = "GAS"
-    _write_cached_plan(cache_dir, "gasco", gas)
+    _write_cached_plan_listed(cache_dir, "gasco", gas)
 
-    # BUSINESS plan — customerType flipped. Excluded by is_residential_electricity.
+    # BUSINESS plan — customerType flipped. Listed as current, but excluded by
+    # is_residential_electricity.
     biz = copy.deepcopy(base)
     biz["data"]["planId"] = "BIZ-EXCLUDE-001@EME"
     biz["data"]["customerType"] = "BUSINESS"
-    _write_cached_plan(cache_dir, "bizco", biz)
+    _write_cached_plan_listed(cache_dir, "bizco", biz)
 
     # Sweep bookkeeping noise that must be ignored.
     os.makedirs(os.path.join(cache_dir, "_progress_v2.json.d"), exist_ok=True)
     with open(os.path.join(cache_dir, "_progress_v2.json"), "w", encoding="utf-8") as f:
         json.dump({"globird": {"done": 2, "total": 2}}, f)
-    with open(
-        os.path.join(cache_dir, base["data"]["brand"], "_planlist.json"),
-        "w",
-        encoding="utf-8",
-    ) as f:
-        json.dump([{"planId": "ignored"}], f)
 
     return cache_dir
 
@@ -174,12 +201,51 @@ def test_manifest_counts_correct(fixture_cache, tmp_path):
 def test_duplicate_plan_ids_deduplicated(fixture_cache):
     """A plan cached under two slugs (shared base URI) appears once."""
     src = _envelope(os.path.join(FIXTURE_SRC, "globird_single_rate.json"))
-    # Same planId, different retailer slug — must not double-count.
-    _write_cached_plan(fixture_cache, "globird-reseller", src)
+    # Same planId, different retailer slug — must not double-count. The reseller
+    # slug lists the plan as current so it survives the current-list filter.
+    _write_cached_plan_listed(fixture_cache, "globird-reseller", src)
 
     plans = build_catalogue.build_plans(fixture_cache)
     ids = [p["planId"] for p in plans]
     assert len(ids) == len(set(ids))
+    assert len(plans) == len(RESIDENTIAL_FIXTURES)
+
+
+def test_stale_cached_detail_excluded_when_not_in_current_list(fixture_cache):
+    """A cached detail absent from the current plan list must not be published.
+
+    Simulates a cache-warm run where a retailer delisted a plan: the detail file
+    lingers in the cache but the refreshed plan list no longer references it.
+    """
+    src = _envelope(os.path.join(FIXTURE_SRC, "globird_single_rate.json"))
+    stale = copy.deepcopy(src)
+    stale_id = "GLO-DELISTED-999@EME"
+    stale["data"]["planId"] = stale_id
+    # Cache the detail WITHOUT adding it to the current plan list.
+    _write_cached_plan(fixture_cache, "globird", stale)
+
+    plans = build_catalogue.build_plans(fixture_cache)
+    plan_ids = {p["planId"] for p in plans}
+    assert stale_id not in plan_ids
+    assert len(plans) == len(RESIDENTIAL_FIXTURES)
+
+
+def test_slug_without_plan_list_contributes_nothing(fixture_cache):
+    """A slug whose plan list is missing/unreadable must contribute no plans.
+
+    Without a trustworthy current list the detail cache for that slug cannot be
+    proven current, so the builder drops the whole slug rather than risk leaking
+    stale entries.
+    """
+    orphan = _envelope(os.path.join(FIXTURE_SRC, "covau_tou.json"))
+    orphan = copy.deepcopy(orphan)
+    orphan["data"]["planId"] = "ORPHAN-NO-LIST-001@EME"
+    # Detail cached, but no _planlist*.json written for this slug.
+    _write_cached_plan(fixture_cache, "orphanco", orphan)
+
+    plans = build_catalogue.build_plans(fixture_cache)
+    plan_ids = {p["planId"] for p in plans}
+    assert "ORPHAN-NO-LIST-001@EME" not in plan_ids
     assert len(plans) == len(RESIDENTIAL_FIXTURES)
 
 

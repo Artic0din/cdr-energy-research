@@ -38,7 +38,48 @@ jobs:
 
       # The sweep and the builder are stdlib-only — no pip install step.
       - name: Run national CDR sweep
-        run: python scripts/cdr_full_sweep_v2.py
+        # --refresh bypasses every cache and re-fetches live (org registry, each
+        # retailer's plan list, each plan detail) so the scheduled run covers the
+        # current retailer set at current rates, never a stale cache. The sweep
+        # exits non-zero if any retailer list or plan-detail fetch failed, which
+        # fails this step and stops the publish — a partial catalogue is never
+        # released.
+        run: python scripts/cdr_full_sweep_v2.py --refresh
+
+      - name: Verify sweep completeness
+        # Defence in depth: independently assert the sweep's own completeness
+        # summary before building/publishing. Fails the job if the summary is
+        # missing or records any list / plan-detail failures.
+        run: |
+          set -euo pipefail
+          summary="/tmp/cdr-cache/_summary_v2.json"
+          if [ ! -f "$summary" ]; then
+            echo "::error::sweep summary missing: $summary" >&2
+            exit 1
+          fi
+          cat "$summary"
+          python - "$summary" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as f:
+              summary = json.load(f)
+
+          list_failures = summary.get("list_failures")
+          detail_failures = summary.get("plan_detail_failures")
+          complete = summary.get("complete")
+          if complete is not True or list_failures or detail_failures:
+              print(
+                  f"::error::incomplete sweep — list_failures={list_failures}, "
+                  f"plan_detail_failures={detail_failures}; refusing to publish",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+          print(
+              f"sweep complete: {summary.get('retailers_reachable')}/"
+              f"{summary.get('retailers_total')} retailers, 0 failures"
+          )
+          PY
 
       - name: Build compact catalogue
         # build_catalogue.py exits non-zero if the sweep yielded 0 qualifying

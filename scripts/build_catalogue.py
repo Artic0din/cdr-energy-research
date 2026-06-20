@@ -4,9 +4,14 @@
 Pure transform: reads the plan-detail JSONs that ``cdr_full_sweep_v2.py``
 caches to ``/tmp/cdr-cache/{slug}/{planId}.json`` (each file is the full CDR
 ``GET /energy/plans/{planId}`` response, i.e. a ``{"data": {...}}`` envelope),
-keeps only residential-electricity plans with a non-empty
-``electricityContract``, and trims each to the minimal entry PriceHawk needs to
-filter and cost a plan.
+keeps only the plans that are still in each retailer's CURRENT plan list (the
+``_planlist*.json`` files the sweep writes), narrows to residential-electricity
+plans with a non-empty ``electricityContract``, and trims each to the minimal
+entry PriceHawk needs to filter and cost a plan.
+
+Filtering by the current plan list matters on a cache-warm run: the detail cache
+can still hold plans a retailer has since delisted, and those must not leak into
+the published catalogue.
 
 The ``electricityContract`` block is copied through unchanged — PriceHawk's
 verified mapper (``map_plan_detail``) consumes each catalogue entry directly as
@@ -67,12 +72,50 @@ def trim_plan(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _iter_cached_details(cache_dir: str) -> "list[dict[str, Any]]":
-    """Yield every cached plan-detail ``data`` object under ``cache_dir``.
+_PLANLIST_PREFIX = "_planlist"
 
-    Mirrors the sweep's cache layout: ``{cache_dir}/{slug}/{planId}.json``,
-    each file a ``{"data": {...}}`` envelope. Skips sweep bookkeeping files and
-    dirs (prefixed with ``_``) and any per-retailer ``_planlist*.json``.
+
+def _current_plan_ids(slug_dir: str) -> "set[str]":
+    """Plan IDs in the slug's CURRENT plan list(s) (the sweep's source of truth).
+
+    The sweep writes the live ``GET /energy/plans`` result per retailer to
+    ``_planlist.json`` (unique base URI) or ``_planlist_{cdrCode}.json`` (one per
+    brand on a shared base URI). Each is the list of plan summaries the retailer
+    currently advertises. A slug may have several brand-scoped lists; we union
+    their plan IDs.
+
+    Returns the set of current ``planId`` strings. An empty set means no plan
+    list was found for this slug, in which case the caller must drop the slug
+    entirely rather than fall back to the (possibly stale) detail cache.
+    """
+    plan_ids: set[str] = set()
+    for fname in os.listdir(slug_dir):
+        if not (fname.startswith(_PLANLIST_PREFIX) and fname.endswith(".json")):
+            continue
+        listing = load_json(os.path.join(slug_dir, fname))
+        if not isinstance(listing, list):
+            continue
+        for plan in listing:
+            if isinstance(plan, dict):
+                pid = plan.get("planId")
+                if isinstance(pid, str):
+                    plan_ids.add(pid)
+    return plan_ids
+
+
+def _iter_cached_details(cache_dir: str) -> "list[dict[str, Any]]":
+    """Yield cached plan-detail ``data`` objects for CURRENTLY-listed plans.
+
+    Mirrors the sweep's cache layout: ``{cache_dir}/{slug}/{planId}.json``, each
+    file a ``{"data": {...}}`` envelope, plus per-retailer ``_planlist*.json``
+    files holding the live plan lists. Skips sweep bookkeeping files and dirs
+    (prefixed with ``_``).
+
+    On a cache-warm run the detail cache can retain plans that the retailer has
+    since removed from its current list; those stale files must not leak into the
+    catalogue. We therefore include a detail only when its ``planId`` is present
+    in the slug's current plan list. A slug with no readable plan list contributes
+    nothing (its detail cache cannot be trusted to be current).
     """
     details: list[dict[str, Any]] = []
     if not os.path.isdir(cache_dir):
@@ -83,6 +126,9 @@ def _iter_cached_details(cache_dir: str) -> "list[dict[str, Any]]":
         slug_dir = os.path.join(cache_dir, slug)
         if not os.path.isdir(slug_dir):
             continue
+        current_ids = _current_plan_ids(slug_dir)
+        if not current_ids:
+            continue
         for fname in sorted(os.listdir(slug_dir)):
             if fname.startswith("_") or not fname.endswith(".json"):
                 continue
@@ -90,8 +136,11 @@ def _iter_cached_details(cache_dir: str) -> "list[dict[str, Any]]":
             if not isinstance(envelope, dict):
                 continue
             data = envelope.get("data")
-            if isinstance(data, dict):
-                details.append(data)
+            if not isinstance(data, dict):
+                continue
+            if data.get("planId") not in current_ids:
+                continue
+            details.append(data)
     return details
 
 

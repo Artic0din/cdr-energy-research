@@ -15,6 +15,7 @@ Cache layout: /tmp/cdr-cache/{slug}/{planId}.json (compatible with v1 cache)
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -29,10 +30,15 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from typing import Any
 
-REPO_ROOT = "/Users/ryanfoyle/Claude/energy/cdr-energy-research"
+# Repo root derived from this script's location (scripts/ is one level down),
+# so the sweep works in any checkout (CI, a fresh clone) without a hardcoded path.
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE_DIR = "/tmp/cdr-cache"
 PROGRESS_PATH = os.path.join(CACHE_DIR, "_progress_v2.json")
 FAILED_PATH = os.path.join(CACHE_DIR, "_failed_v2.jsonl")
+# Machine-readable completeness summary, written at the end of every run. The
+# publish workflow reads this to refuse releasing a partial catalogue.
+SUMMARY_PATH = os.path.join(CACHE_DIR, "_summary_v2.json")
 EME_REFDATA = os.path.join(REPO_ROOT, "data", "eme-refdata.json")
 EME_REFDATA_URL = "https://api.energymadeeasy.gov.au/refdata2?keys=organisations,thirdParties"
 
@@ -139,10 +145,18 @@ def append_failed(rec: dict) -> None:
 # Registry from EME refdata2
 # ---------------------------------------------------------------------------
 
-def fetch_eme_refdata() -> dict:
-    cached = load_json(EME_REFDATA)
-    if cached is not None:
-        return cached
+def fetch_eme_refdata(refresh: bool = False) -> dict:
+    """Load the EME refdata2 registry (organisations + thirdParties).
+
+    Uses the committed ``data/eme-refdata.json`` snapshot when present, so local
+    runs are fast and offline-friendly. Pass ``refresh=True`` (scheduled CI runs)
+    to bypass the snapshot and re-fetch live, so the catalogue is built from the
+    retailer set as it stands today rather than a stale committed copy.
+    """
+    if not refresh:
+        cached = load_json(EME_REFDATA)
+        if cached is not None:
+            return cached
     j, err, _ = http_get(EME_REFDATA_URL)
     if not j:
         raise RuntimeError(f"EME refdata fetch failed: {err}")
@@ -196,10 +210,15 @@ def build_retailer_list(refdata: dict) -> list[dict]:
 # List + detail fetch
 # ---------------------------------------------------------------------------
 
-def fetch_plan_list(base: str, slug: str, brand_filter: str | None = None) -> tuple[list[dict], str | None]:
+def fetch_plan_list(
+    base: str, slug: str, brand_filter: str | None = None, refresh: bool = False
+) -> tuple[list[dict], str | None]:
     cache_name = f"_planlist_{brand_filter}.json" if brand_filter else "_planlist.json"
     cache_file = os.path.join(cache_dir(slug), cache_name)
-    cached = load_json(cache_file)
+    # On a refresh run (scheduled publish) we must re-fetch the live list so the
+    # catalogue reflects what each retailer currently advertises; a stale cached
+    # list would otherwise be trusted as "CURRENT" by build_catalogue.
+    cached = None if refresh else load_json(cache_file)
     if cached is not None:
         if isinstance(cached, list):
             return cached, None
@@ -242,10 +261,14 @@ def fetch_plan_list(base: str, slug: str, brand_filter: str | None = None) -> tu
     return all_plans, None
 
 
-def fetch_plan_detail(base: str, plan_id: str, slug: str) -> tuple[dict | None, str | None]:
+def fetch_plan_detail(
+    base: str, plan_id: str, slug: str, refresh: bool = False
+) -> tuple[dict | None, str | None]:
     safe_id = plan_id.replace("/", "_")
     cache_file = os.path.join(cache_dir(slug), f"{safe_id}.json")
-    cached = load_json(cache_file)
+    # On a refresh run, re-fetch the plan body so the catalogue carries current
+    # rates/contracts rather than a stale cached detail.
+    cached = None if refresh else load_json(cache_file)
     if cached is not None:
         return cached, None
     url = f"{base.rstrip('/')}/cds-au/v1/energy/plans/{plan_id}"
@@ -268,10 +291,12 @@ def is_residential_electricity(p: dict) -> bool:
 # Per-retailer worker
 # ---------------------------------------------------------------------------
 
-def process_retailer(r: dict, shared_base_brands: dict) -> dict:
+def process_retailer(r: dict, shared_base_brands: dict, refresh: bool = False) -> dict:
     """Fetch and cache plans for one brand.
 
-    For shared base URIs, use ?brand= to filter; for unique, fetch all.
+    For shared base URIs, use ?brand= to filter; for unique, fetch all. On a
+    ``refresh`` run the cached plan list and plan details are bypassed so the
+    catalogue is built from live data.
     """
     slug = r["slug"]
     base = r["baseUri"]
@@ -286,11 +311,18 @@ def process_retailer(r: dict, shared_base_brands: dict) -> dict:
     }
     use_brand_filter = stats["shared_base"]
     plans, list_err = fetch_plan_list(
-        base, slug, brand_filter=cdr_code if use_brand_filter else None
+        base, slug, brand_filter=cdr_code if use_brand_filter else None, refresh=refresh
     )
-    if list_err and not plans:
+    # Any list error marks the retailer incomplete — even a mid-pagination
+    # failure that still returned earlier pages. A partial plan list must NOT be
+    # treated as a clean sweep, or the publish gate would release a catalogue
+    # missing this retailer's later-page plans. We still process whatever pages
+    # we got (so the failure is visible in counts), but the recorded list_error
+    # makes write_summary() flag the run incomplete and CI refuses to publish.
+    if list_err:
         stats["list_error"] = list_err
-        return stats
+        if not plans:
+            return stats
     stats["plans_listed"] = len(plans)
     filtered = [p for p in plans if is_residential_electricity(p)]
     stats["plans_filtered"] = len(filtered)
@@ -300,7 +332,7 @@ def process_retailer(r: dict, shared_base_brands: dict) -> dict:
         pid = p.get("planId")
         if not pid:
             continue
-        d, err = fetch_plan_detail(base, pid, slug)
+        d, err = fetch_plan_detail(base, pid, slug, refresh=refresh)
         if d is None:
             failed += 1
             append_failed({"slug": slug, "cdrCode": cdr_code, "planId": pid, "error": err})
@@ -807,9 +839,49 @@ def save_text(path: str, content: str) -> None:
 # Main
 # ---------------------------------------------------------------------------
 
-def main() -> None:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help=(
+            "Bypass every cache and re-fetch live: the EME refdata2 organisation "
+            "registry, each retailer's plan list, and each plan's detail. Use on "
+            "scheduled publish runs so the catalogue reflects the current "
+            "retailer set and current rates, never a stale cache."
+        ),
+    )
+    return parser.parse_args(argv)
+
+
+def write_summary(stats: list[dict], plan_detail_failures: int) -> dict:
+    """Persist a machine-readable completeness summary and return it.
+
+    ``list_failures`` counts retailers whose plan-list request failed outright
+    (``list_error`` set). ``plan_detail_failures`` is the number of individual
+    plan-detail fetches that failed (each appended to ``_failed_v2.jsonl``).
+    ``complete`` is True only when both are zero — the publish workflow refuses
+    to release unless the sweep is complete.
+    """
+    list_failures = sum(1 for s in stats if s.get("list_error"))
+    summary = {
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "retailers_total": len(stats),
+        "retailers_reachable": len(stats) - list_failures,
+        "list_failures": list_failures,
+        "plan_detail_failures": plan_detail_failures,
+        "complete": list_failures == 0 and plan_detail_failures == 0,
+    }
+    save_json(SUMMARY_PATH, summary, indent=2)
+    return summary
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
     print("=== Loading EME refdata2 ===", file=sys.stderr, flush=True)
-    refdata = fetch_eme_refdata()
+    if args.refresh:
+        print("  --refresh: bypassing caches, fetching live", file=sys.stderr, flush=True)
+    refdata = fetch_eme_refdata(refresh=args.refresh)
     retailers = build_retailer_list(refdata)
     print(f"  {len(retailers)} CDR-enrolled retailers", file=sys.stderr, flush=True)
 
@@ -832,7 +904,10 @@ def main() -> None:
     print(f"\n=== Phase 1: parallel fetch ({PARALLEL_RETAILERS} workers) ===", file=sys.stderr, flush=True)
     stats: list[dict] = []
     with ThreadPoolExecutor(max_workers=PARALLEL_RETAILERS) as ex:
-        futures = {ex.submit(process_retailer, r, base_to_brands): r for r in retailers}
+        futures = {
+            ex.submit(process_retailer, r, base_to_brands, args.refresh): r
+            for r in retailers
+        }
         done = 0
         for fut in as_completed(futures):
             r = futures[fut]
@@ -922,25 +997,37 @@ def main() -> None:
         "stats": stats,
     }, indent=2)
 
+    # Completeness summary: this run's plan-detail failures (not the cumulative
+    # _failed_v2.jsonl, which spans resumes) plus retailers whose list failed.
+    n_plan_detail_failures = sum(s["plans_failed"] for s in stats)
+    summary = write_summary(stats, n_plan_detail_failures)
+
     # Final stdout
-    n_reachable = sum(1 for s in stats if not s.get("list_error"))
+    n_reachable = summary["retailers_reachable"]
     n_fetched = sum(s["plans_fetched"] for s in stats)
     duration = time.time() - WALL_CLOCK_START
     print("---SUMMARY---")
     print(f"Retailers reachable: {n_reachable}/{len(stats)}")
+    print(f"List failures: {summary['list_failures']}")
+    print(f"Plan-detail failures: {n_plan_detail_failures:,}")
     print(f"Plans fetched: {n_fetched:,}")
     print(f"Distinct shape signatures: {len(sig_to_plans):,}")
     print(f"EV-overlay candidates: {len(ev_overlay_plans):,}")
     print(f"Wall-clock: {duration:.1f}s")
+    print(f"Complete: {summary['complete']}")
+    print(f"Summary:  {SUMMARY_PATH}")
     print(f"Catalog:  {CATALOG_PATH}")
     print(f"Enums:    {ENUMS_PATH}")
     print(f"Registry: {REGISTRY_CMP_PATH}")
     print(f"Index:    {RETAILER_INDEX_PATH}")
 
+    # Non-zero exit when the sweep is incomplete so CI fails before publishing.
+    return 0 if summary["complete"] else 1
+
 
 if __name__ == "__main__":
     try:
-        main()
+        sys.exit(main())
     except KeyboardInterrupt:
         print("\nInterrupted — progress checkpointed, resume by re-running.", file=sys.stderr)
         sys.exit(130)
