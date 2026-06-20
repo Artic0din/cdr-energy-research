@@ -5,6 +5,10 @@ All notable changes to this research repo.
 ## [Unreleased]
 
 ### Added
+- Branding: logo, wordmark, and social-preview assets in `assets/`. The README
+  wordmark uses a theme-aware `<picture>` (`prefers-color-scheme`) with a
+  light-ink dark-mode SVG variant (`logo-wordmark-dark.svg`) so the wordmark and
+  tagline stay legible on GitHub's dark canvas, not just on white.
 - Initial repository structure with docs/, data/, scripts/, cache/
 - v1 shape catalog (78 retailers, 10,266 plans, 1,724 signatures) at `docs/shape-catalog-v1.md`
 - v2 sweep script using EME refdata2 (117 retailers) + comprehensive field probe at `scripts/cdr_full_sweep_v2.py`
