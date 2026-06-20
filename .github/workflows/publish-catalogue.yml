@@ -23,9 +23,12 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # The national sweep is polite/rate-limited (~8 min cache-warm, ~33 min
-    # cold). Generous ceiling so a slow run completes; never hangs forever.
-    timeout-minutes: 60
+    # The national sweep is polite/rate-limited: ~8 min cache-warm, but this job
+    # always runs --refresh (a cold live sweep). The committed v2 sweep recorded
+    # 6036.1s (~101 min) wall-clock for a cold run (docs/shape-catalog-v2.md), so
+    # the ceiling must clear that plus the build + release steps with margin.
+    # Generous ceiling so a slow run completes; never hangs forever.
+    timeout-minutes: 180
 
     steps:
       - name: Checkout

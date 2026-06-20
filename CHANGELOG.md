@@ -4,6 +4,12 @@ All notable changes to this research repo.
 
 ## [Unreleased]
 
+### Fixed
+- `publish-catalogue.yml`: raised the `publish` job `timeout-minutes` from 60 to
+  180. The job always runs a cold `--refresh` sweep, which the committed v2 sweep
+  records at 6036.1s (~101 min); the old 60-min ceiling cancelled the run before
+  the build + release steps, so no catalogue was ever published.
+
 ### Added
 - Catalogue publish pipeline: `scripts/build_catalogue.py` trims the swept cache
   to a compact residential-electricity catalogue (`dist/catalogue.json.gz` +
