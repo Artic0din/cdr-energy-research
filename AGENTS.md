@@ -36,3 +36,11 @@ No tests, no lint config in-repo (global standards still apply for any new code)
 
 - Publish publicly without legal review — this is a private research repo (data is public, operational details should be reviewed).
 - Commit the `/tmp` cache or working `.stdout`/`.stderr` files.
+
+## Cursor Cloud specific instructions
+
+- No install step: pure Python 3 stdlib (see `## Stack`). The startup/update script is just a `python3 --version` presence check — there are no packages to fetch.
+- Outbound network is available and required. The scripts fetch live from `api.energymadeeasy.gov.au` (EME refdata2) and `raw.githubusercontent.com` (jxeeno registry) plus per-retailer `cdr.energymadeeasy.gov.au/<cdrCode>` PRD endpoints. No auth needed (PRD is public).
+- Quickest end-to-end demo: `python3 scripts/cdr_probe_v1.py` (self-contained — reads/writes only `/tmp`). Cold run crawls all 78 retailers in ~10 min and writes `/tmp/cdr-shape-catalog.md`; reruns are ~instant because `/tmp/cdr-cache` hits are reused.
+- `/tmp/cdr-cache` does NOT persist across fresh VMs, so the first run each session is a full cold crawl.
+- `scripts/cdr_full_sweep_v2.py` is NOT portable as-is: `REPO_ROOT` is hardcoded to `/Users/ryanfoyle/Development/cdr-energy-research`, so it reads/writes docs/ and data/ under that absolute path and fails on any other machine. To run it here you must point `REPO_ROOT` at the repo (parametrize it, or symlink the hardcoded path to the checkout). Note it also regenerates committed `docs/` + `data/` outputs and takes ~33 min.
