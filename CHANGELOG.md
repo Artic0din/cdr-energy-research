@@ -4,6 +4,9 @@ All notable changes to this research repo.
 
 ## [Unreleased]
 
+### Changed
+- Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
+
 ### Added
 - Initial repository structure with docs/, data/, scripts/, cache/
 - v1 shape catalog (78 retailers, 10,266 plans, 1,724 signatures) at `docs/shape-catalog-v1.md`
