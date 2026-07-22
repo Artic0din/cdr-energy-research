@@ -44,3 +44,11 @@ No tests, no lint config in-repo (global standards still apply for any new code)
 - Quickest end-to-end demo: `python3 scripts/cdr_probe_v1.py` (self-contained — reads/writes only `/tmp`). Cold run crawls all 78 retailers in ~10 min and writes `/tmp/cdr-shape-catalog.md`; reruns are ~instant because `/tmp/cdr-cache` hits are reused.
 - `/tmp/cdr-cache` does NOT persist across fresh VMs, so the first run each session is a full cold crawl.
 - `scripts/cdr_full_sweep_v2.py` is NOT portable as-is: `REPO_ROOT` is hardcoded to `/Users/ryanfoyle/Development/cdr-energy-research`, so it reads/writes docs/ and data/ under that absolute path and fails on any other machine. To run it here you must point `REPO_ROOT` at the repo (parametrize it, or symlink the hardcoded path to the checkout). Note it also regenerates committed `docs/` + `data/` outputs and takes ~33 min.
+
+## Work tracking
+
+- GitHub Issues are canonical for planned, multi-session, or backlog work; small one-PR fixes do not require an issue.
+- The user-level `Development` Project is a dashboard, while issues, pull requests, reviews, and CI remain authoritative.
+- For issue-backed work, use one issue per branch and pull request, include the issue number in the branch name, and add `Fixes #123` to the pull-request body.
+- Keep Project status at `Todo` before work, `In Progress` during implementation or review, and `Done` only after closure or merge.
+- Update issue checklists only for verified work; checklist completion is never a merge gate.
