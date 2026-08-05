@@ -9,6 +9,16 @@ All notable changes to this research repo.
   180. The job always runs a cold `--refresh` sweep, which the committed v2 sweep
   records at 6036.1s (~101 min); the old 60-min ceiling cancelled the run before
   the build + release steps, so no catalogue was ever published.
+- `scripts/cdr_full_sweep_v2.py`: `REPO_ROOT` is derived from the script location
+  instead of a hardcoded absolute path, so the scheduled sweep works in any
+  checkout (CI, fresh clone).
+- `scripts/cdr_full_sweep_v2.py`: a plan-list request that fails part-way through
+  pagination now records a `list_error` (previously the partial list was treated
+  as a clean sweep), so the publish gate refuses to release a catalogue missing
+  that retailer's later-page plans.
+
+### Changed
+- Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Added
 - Catalogue publish pipeline: `scripts/build_catalogue.py` trims the swept cache
@@ -37,15 +47,6 @@ All notable changes to this research repo.
   empty-cache guard, current-list filtering of stale details, the completeness
   summary gate, refresh cache-bypass, and partial-list-failure detection. The
   suite is self-contained (no external fixture paths).
-
-### Fixed
-- `scripts/cdr_full_sweep_v2.py`: `REPO_ROOT` is derived from the script location
-  instead of a hardcoded absolute path, so the scheduled sweep works in any
-  checkout (CI, fresh clone).
-- `scripts/cdr_full_sweep_v2.py`: a plan-list request that fails part-way through
-  pagination now records a `list_error` (previously the partial list was treated
-  as a clean sweep), so the publish gate refuses to release a catalogue missing
-  that retailer's later-page plans.
 - Initial repository structure with docs/, data/, scripts/, cache/
 - v1 shape catalog (78 retailers, 10,266 plans, 1,724 signatures) at `docs/shape-catalog-v1.md`
 - v2 sweep script using EME refdata2 (117 retailers) + comprehensive field probe at `scripts/cdr_full_sweep_v2.py`
