@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="gs" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#022c22"/>
+      <stop offset="1" stop-color="#022c22" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="ga" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10b981"/>
+      <stop offset="1" stop-color="#10b981" stop-opacity="0.65"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#gs)"/>
+  <polygon points="0,640 0,520 1280,140 1280,260" fill="#10b981" fill-opacity="0.08"/>
+  <rect x="90" y="190" width="260" height="260" rx="56" fill="url(#ga)"/>
+  <text x="220" y="320" text-anchor="middle" dominant-baseline="central"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="900"
+        font-size="160" fill="#ecfdf5" letter-spacing="-3">CDR</text>
+  <text x="410" y="295" dominant-baseline="central"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="900"
+        font-size="60" fill="#ecfdf5" letter-spacing="-3">cdr-energy-research</text>
+  <text x="410" y="365" dominant-baseline="central"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="500"
+        font-size="26" fill="#10b981" opacity="0.95">AU Consumer Data Right energy reference data — research and tooling</text>
+  <text x="1190" y="600" text-anchor="end" dominant-baseline="central"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="600"
+        font-size="18" fill="#ecfdf5" opacity="0.55">github.com/Artic0din</text>
+</svg>

@@ -23,6 +23,10 @@ All notable changes to this research repo.
 - Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Added
+- Branding: logo, wordmark, and social-preview assets in `assets/`. The README
+  wordmark uses a theme-aware `<picture>` (`prefers-color-scheme`) with a
+  light-ink dark-mode SVG variant (`logo-wordmark-dark.svg`) so the wordmark and
+  tagline stay legible on GitHub's dark canvas, not just on white.
 - Catalogue publish pipeline: `scripts/build_catalogue.py` trims the swept cache
   to a compact residential-electricity catalogue (`dist/catalogue.json.gz` +
   `dist/manifest.json`, schema_version 1) for the PriceHawk HA integration to
