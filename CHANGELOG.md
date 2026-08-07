@@ -4,6 +4,18 @@ All notable changes to this research repo.
 
 ## [Unreleased]
 
+### Fixed
+- `publish-catalogue.yml`: raised the `publish` job `timeout-minutes` from 60 to
+  180. The job always runs a cold `--refresh` sweep, which the committed v2 sweep
+  records at 6036.1s (~101 min); the old 60-min ceiling cancelled the run before
+  the build + release steps, so no catalogue was ever published.
+- `scripts/cdr_full_sweep_v2.py`: `REPO_ROOT` is derived from the script location
+  instead of a hardcoded absolute path, so the scheduled sweep works in any
+  checkout (CI, fresh clone).
+- `scripts/cdr_full_sweep_v2.py`: a plan-list request that fails part-way through
+  pagination now records a `list_error` (previously the partial list was treated
+  as a clean sweep), so the publish gate refuses to release a catalogue missing
+  that retailer's later-page plans.
 - Added deterministic pull-request validation for Python sources and committed JSON research data.
 
 ### Changed
@@ -15,6 +27,32 @@ All notable changes to this research repo.
   wordmark uses a theme-aware `<picture>` (`prefers-color-scheme`) with a
   light-ink dark-mode SVG variant (`logo-wordmark-dark.svg`) so the wordmark and
   tagline stay legible on GitHub's dark canvas, not just on white.
+- Catalogue publish pipeline: `scripts/build_catalogue.py` trims the swept cache
+  to a compact residential-electricity catalogue (`dist/catalogue.json.gz` +
+  `dist/manifest.json`, schema_version 1) for the PriceHawk HA integration to
+  download and rank against. Stdlib-only; reuses the v2 sweep's
+  `is_residential_electricity`/`load_json` helpers. Builds only from each
+  retailer's CURRENT plan list (`_planlist*.json`), so stale or delisted plans
+  lingering in a warm detail cache never leak into the catalogue.
+- Daily `.github/workflows/publish-catalogue.yml` (03:00 AEST + manual dispatch):
+  runs the national sweep with `--refresh` (live registry + lists + details),
+  builds the catalogue, and publishes it as a GitHub Release with a dated tag and
+  `make_latest: true` so the stable `releases/latest/download/catalogue.json.gz`
+  URL always resolves to the newest build. Refuses to publish an empty catalogue
+  (0-plan sweep fails the job) or a partial one (a `Verify sweep completeness`
+  step plus the sweep's own non-zero exit block release on any list/detail
+  failure).
+- `scripts/cdr_full_sweep_v2.py --refresh` flag: bypasses every cache and
+  re-fetches the EME registry, plan lists, and plan details live; writes a
+  machine-readable `_summary_v2.json` (list/plan-detail failure counts +
+  `complete` flag) and exits non-zero when the sweep is incomplete.
+- `tests/test_build_catalogue.py`, `tests/test_sweep_summary.py`,
+  `tests/test_sweep_fetch.py` + vendored `tests/fixtures/cdr/*.json` +
+  `requirements-dev.txt` (pytest): residential filtering, trimmed-entry schema,
+  `electricityContract` pass-through, gzip round-trip, manifest counts, dedup,
+  empty-cache guard, current-list filtering of stale details, the completeness
+  summary gate, refresh cache-bypass, and partial-list-failure detection. The
+  suite is self-contained (no external fixture paths).
 - Continuous integration now compiles the research scripts and validates every tracked JSON dataset on pull requests.
 - Initial repository structure with docs/, data/, scripts/, cache/
 - v1 shape catalog (78 retailers, 10,266 plans, 1,724 signatures) at `docs/shape-catalog-v1.md`
