@@ -14,7 +14,7 @@ description: |
   Always polite, constructive, and mindful of the project's goals.
 
 imports:
-  - Plaintext-Lab/agentic-workflows/.github/workflows/shared/repo-assist-policy.md@06b1eea4b7c613c2eda825faf49116e19e593a83
+  - Plaintext-Lab/agentic-workflows/.github/workflows/shared/repo-assist-policy.md@31ea0c7047185a0c94285205b2a2b2052cceb020
 
 on:
   schedule: weekly
@@ -98,7 +98,7 @@ safe-outputs:
     draft: false
     labels: [automation, repo-assist]
     protected-files: fallback-to-issue
-    max: 1
+    max: 4
   push-to-pull-request-branch:
     target: "*"
     required-labels: [repo-assist]
@@ -107,7 +107,7 @@ safe-outputs:
   create-issue:
     title-prefix: "[repo-assist] "
     labels: [automation, repo-assist]
-    max: 1
+    max: 4
   update-issue:
     target: "*"
     required-title-prefix: "[repo-assist] "
@@ -184,8 +184,8 @@ steps:
       task_ids     = list(weights.keys())
       task_weights = [weights[t] for t in task_ids]
 
-      # Weighted selection of exactly one task
-      NUM_TASKS_PER_RUN = 1
+      # Weighted selection of up to four independent tasks
+      NUM_TASKS_PER_RUN = 4
       chosen, seen = [], set()
       for t in rng.choices(task_ids, weights=task_weights, k=30):
           if t not in seen:

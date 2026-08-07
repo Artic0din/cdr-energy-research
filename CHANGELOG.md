@@ -7,7 +7,7 @@ All notable changes to this research repo.
 - Added deterministic pull-request validation for Python sources and committed JSON research data.
 
 ### Changed
-- Standardised Repo Assist on the pinned fleet policy with one-task issue-backed delivery, Graphite handoff, persistent memory, and bounded spending.
+- Corrected Repo Assist to allow up to four single-task, issue-backed pull requests per run while retaining Graphite handoff, persistent memory, and bounded spending.
 - Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Added
