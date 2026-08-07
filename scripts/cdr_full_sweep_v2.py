@@ -251,12 +251,12 @@ def fetch_plan_list(
             total_pages = int(meta.get("totalPages", 1) or 1)
         except (AttributeError, TypeError, ValueError) as e:
             return all_plans, f"shape:{e}"
+        if total_pages > 30:
+            return [], f"pagination:totalPages={total_pages} exceeds maximum 30"
         all_plans.extend(plans)
         if page >= total_pages:
             break
         page += 1
-        if page > 30:
-            break
     save_json(cache_file, all_plans)
     return all_plans, None
 
@@ -865,7 +865,7 @@ def write_summary(stats: list[dict], plan_detail_failures: int) -> dict:
     """
     list_failures = sum(1 for s in stats if s.get("list_error"))
     summary = {
-        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "retailers_total": len(stats),
         "retailers_reachable": len(stats) - list_failures,
         "list_failures": list_failures,
@@ -895,7 +895,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Save retailer index
     save_json(RETAILER_INDEX_PATH, {
-        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "retailers": retailers,
         "baseToBrands": dict(base_to_brands),
     }, indent=2)
@@ -990,7 +990,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Registry comparison artifact
     save_json(REGISTRY_CMP_PATH, {
-        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "totalEmeOrgs": len(retailers),
         "uniqueBaseUris": n_unique_bases,
         "sharedBaseCount": n_shared,

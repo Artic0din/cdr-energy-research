@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime
+from unittest.mock import patch
 
 import cdr_full_sweep_v2 as sweep
 
@@ -57,3 +59,12 @@ def test_summary_incomplete_on_plan_detail_failure(monkeypatch, tmp_path):
     assert summary["plan_detail_failures"] == 2
     # A plan-detail failure does not mark the retailer's list unreachable.
     assert summary["retailers_reachable"] == 2
+
+
+def test_summary_timestamp_is_explicit_utc(tmp_path):
+    summary_path = os.path.join(str(tmp_path), "_summary_v2.json")
+    with patch.object(sweep, "SUMMARY_PATH", summary_path):
+        summary = sweep.write_summary([], plan_detail_failures=0)
+
+    assert summary["generatedAt"].endswith("Z")
+    assert datetime.fromisoformat(summary["generatedAt"].replace("Z", "+00:00"))

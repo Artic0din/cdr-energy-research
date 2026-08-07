@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+from unittest.mock import patch
 
 import pytest
 
@@ -119,3 +120,23 @@ def test_partial_list_failure_records_list_error(isolated_cache, monkeypatch):
 
     assert stats["list_error"] is not None, "partial-page failure must set list_error"
     assert "503" in str(stats["list_error"])
+
+
+def test_fetch_plan_list_fails_closed_when_pagination_exceeds_cap(
+    isolated_cache,
+):
+    """A capped response must not be returned or cached as a complete list."""
+    slug = "hugeco"
+    calls = {"n": 0}
+
+    def _paged(url, headers, s):
+        calls["n"] += 1
+        return _planlist_response([f"P{calls['n']}@EME"], total_pages=31), None, 200
+
+    with patch.object(sweep, "polite_get", _paged):
+        plans, err = sweep.fetch_plan_list("https://x", slug, refresh=True)
+
+    assert plans == []
+    assert err == "pagination:totalPages=31 exceeds maximum 30"
+    assert calls["n"] == 1
+    assert not os.path.exists(os.path.join(sweep.cache_dir(slug), "_planlist.json"))
