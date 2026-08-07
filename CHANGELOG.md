@@ -5,6 +5,9 @@ All notable changes to this research repo.
 ## [Unreleased]
 
 ### Fixed
+- Shared PRD endpoints now deduplicate retailers by `cdrBrand`, filter plan
+  lists by that brand identity, serialize requests per base URI, and exclude
+  stale mixed-brand detail files from catalogue extraction.
 - `publish-catalogue.yml`: raised the `publish` job `timeout-minutes` from 60 to
   180. The job always runs a cold `--refresh` sweep, which the committed v2 sweep
   records at 6036.1s (~101 min); the old 60-min ceiling cancelled the run before
