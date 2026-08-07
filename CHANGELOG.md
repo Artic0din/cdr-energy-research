@@ -11,6 +11,7 @@ All notable changes to this research repo.
 - Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Added
+- Continuous integration now compiles the research scripts and validates every tracked JSON dataset on pull requests.
 - Initial repository structure with docs/, data/, scripts/, cache/
 - v1 shape catalog (78 retailers, 10,266 plans, 1,724 signatures) at `docs/shape-catalog-v1.md`
 - v2 sweep script using EME refdata2 (117 retailers) + comprehensive field probe at `scripts/cdr_full_sweep_v2.py`
