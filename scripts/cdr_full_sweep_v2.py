@@ -3,7 +3,7 @@
 
 Improvements over v1:
 - Source registry from Energy Made Easy refdata2 (117 orgs, vs jxeeno's 78)
-- Use ?brand=<cdrCode> to disambiguate plans on shared base URIs
+- Use ?brand=<cdrBrand> to disambiguate plans on shared base URIs
 - Probe ALL fields (top-level plan, contract, all sub-lists, deep TOU windows)
 - Capture enum value distributions across all plans
 - Output comprehensive catalog: shape signatures + retailer matrix +
@@ -55,7 +55,7 @@ PER_RETAILER_GAP = 1.0
 
 WALL_CLOCK_START = time.time()
 
-retailer_locks: dict[str, Lock] = defaultdict(Lock)
+endpoint_locks: dict[str, Lock] = defaultdict(Lock)
 last_request_at: dict[str, float] = defaultdict(float)
 failed_lock = Lock()
 progress_lock = Lock()
@@ -91,16 +91,18 @@ def http_get(url: str, headers: dict[str, str] | None = None) -> tuple[Any | Non
         return None, f"err:{type(e).__name__}:{e}", 0
 
 
-def polite_get(url: str, headers: dict, slug: str) -> tuple[Any | None, str | None, int]:
+def polite_get(
+    url: str, headers: dict, rate_limit_key: str
+) -> tuple[Any | None, str | None, int]:
     backoff = 2.0
     last_err = None
     for _ in range(MAX_RETRIES):
-        with retailer_locks[slug]:
+        with endpoint_locks[rate_limit_key]:
             now = time.time()
-            wait = (last_request_at[slug] + PER_RETAILER_GAP) - now
+            wait = (last_request_at[rate_limit_key] + PER_RETAILER_GAP) - now
             if wait > 0:
                 time.sleep(wait)
-            last_request_at[slug] = time.time()
+            last_request_at[rate_limit_key] = time.time()
             j, err, status = http_get(url, headers)
         if j is not None:
             return j, None, status
@@ -167,28 +169,28 @@ def fetch_eme_refdata(refresh: bool = False) -> dict:
 def build_retailer_list(refdata: dict) -> list[dict]:
     """Returns deduped list of retailer entries.
 
-    Dedupes by cdrCode (collapses duplicate org records like
-    Origin/Electricity + Origin/LPG + Origin/Retail Limited all sharing
-    cdrCode=origin). Drops orgs that have NO electricityBillURL AND a
-    gasBillURL (gas-only retailers — we only care about electricity).
+    Dedupes by cdrBrand because co-hosted brands can share one cdrCode/base URI.
+    Drops orgs that have NO electricityBillURL AND a gasBillURL (gas-only
+    retailers — we only care about electricity).
     """
     orgs = refdata.get("data", {}).get("organisations", {})
-    seen_cdr_codes: set[str] = set()
+    seen_brands: set[str] = set()
     out = []
     for org_id, o in orgs.items():
         cdr_code = o.get("cdrCode")
         if not cdr_code:
             continue
-        if cdr_code in seen_cdr_codes:
+        cdr_brand = o.get("cdrBrand") or cdr_code
+        if cdr_brand in seen_brands:
             continue
         # Skip gas-only retailers (no electricityBillURL, has gasBillURL)
         if not o.get("electricityBillURL") and o.get("gasBillURL"):
             continue
-        seen_cdr_codes.add(cdr_code)
+        seen_brands.add(cdr_brand)
         out.append({
             "orgId": org_id,
             "cdrCode": cdr_code,
-            "cdrBrand": o.get("cdrBrand") or cdr_code,
+            "cdrBrand": cdr_brand,
             "tradingName": o.get("tradingName"),
             "orgName": o.get("orgName"),
             "abn": o.get("abn"),
@@ -242,7 +244,7 @@ def fetch_plan_list(
         if brand_filter:
             params.append(f"brand={brand_filter}")
         url = f"{base.rstrip('/')}/cds-au/v1/energy/plans?{'&'.join(params)}"
-        j, err, _ = polite_get(url, {"x-v": "1"}, slug)
+        j, err, _ = polite_get(url, {"x-v": "1"}, base)
         if j is None:
             return all_plans, err
         try:
@@ -272,7 +274,7 @@ def fetch_plan_detail(
     if cached is not None:
         return cached, None
     url = f"{base.rstrip('/')}/cds-au/v1/energy/plans/{plan_id}"
-    j, err, status = polite_get(url, {"x-v": "3"}, slug)
+    j, err, status = polite_get(url, {"x-v": "3"}, base)
     if j is None:
         return None, f"{err} (status={status})"
     save_json(cache_file, j)
@@ -285,6 +287,23 @@ def is_residential_electricity(p: dict) -> bool:
         and p.get("customerType") == "RESIDENTIAL"
         and p.get("type") in ("MARKET", "STANDING")
     )
+
+
+def current_plan_ids(stat: dict) -> set[str]:
+    """Return plan IDs from the current list cache for one retailer brand."""
+    brand = stat.get("cdrBrand") if stat.get("shared_base") else None
+    cache_name = f"_planlist_{brand}.json" if brand else "_planlist.json"
+    cached = load_json(os.path.join(cache_dir(stat["slug"]), cache_name))
+    if isinstance(cached, dict):
+        cached = cached.get("plans", cached.get("data", {}).get("plans", []))
+    if not isinstance(cached, list):
+        return set()
+    return {
+        plan_id
+        for plan in cached
+        if isinstance(plan, dict) and is_residential_electricity(plan)
+        if (plan_id := plan.get("planId"))
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -301,8 +320,9 @@ def process_retailer(r: dict, shared_base_brands: dict, refresh: bool = False) -
     slug = r["slug"]
     base = r["baseUri"]
     cdr_code = r["cdrCode"]
+    cdr_brand = r.get("cdrBrand") or cdr_code
     stats = {
-        "cdrCode": cdr_code, "slug": slug, "base": base,
+        "cdrCode": cdr_code, "cdrBrand": cdr_brand, "slug": slug, "base": base,
         "tradingName": r.get("tradingName"),
         "orgName": r.get("orgName"),
         "shared_base": len(shared_base_brands.get(base, [])) > 1,
@@ -311,7 +331,7 @@ def process_retailer(r: dict, shared_base_brands: dict, refresh: bool = False) -
     }
     use_brand_filter = stats["shared_base"]
     plans, list_err = fetch_plan_list(
-        base, slug, brand_filter=cdr_code if use_brand_filter else None, refresh=refresh
+        base, slug, brand_filter=cdr_brand if use_brand_filter else None, refresh=refresh
     )
     # Any list error marks the retailer incomplete — even a mid-pagination
     # failure that still returned earlier pages. A partial plan list must NOT be
@@ -888,7 +908,7 @@ def main(argv: list[str] | None = None) -> int:
     # Map shared base URIs
     base_to_brands = defaultdict(list)
     for r in retailers:
-        base_to_brands[r["baseUri"]].append(r["cdrCode"])
+        base_to_brands[r["baseUri"]].append(r["cdrBrand"])
     n_unique_bases = len(base_to_brands)
     n_shared = sum(1 for v in base_to_brands.values() if len(v) > 1)
     print(f"  {n_unique_bases} unique base URIs, {n_shared} shared", file=sys.stderr, flush=True)
@@ -915,7 +935,8 @@ def main(argv: list[str] | None = None) -> int:
                 stats.append(fut.result())
             except Exception as e:  # noqa: BLE001
                 stats.append({
-                    "cdrCode": r["cdrCode"], "slug": r["slug"], "base": r["baseUri"],
+                    "cdrCode": r["cdrCode"], "cdrBrand": r["cdrBrand"],
+                    "slug": r["slug"], "base": r["baseUri"],
                     "tradingName": r.get("tradingName"), "orgName": r.get("orgName"),
                     "shared_base": False,
                     "plans_listed": 0, "plans_filtered": 0, "plans_fetched": 0,
@@ -942,10 +963,16 @@ def main(argv: list[str] | None = None) -> int:
         d = os.path.join(CACHE_DIR, slug)
         if not os.path.isdir(d):
             continue
+        stat = slug_to_stat.get(slug)
+        if stat is None:
+            continue
+        allowed_plan_ids = current_plan_ids(stat)
         for fname in os.listdir(d):
             if fname.startswith("_") or not fname.endswith(".json"):
                 continue
             pid = fname[:-5]
+            if pid not in allowed_plan_ids:
+                continue
             path = os.path.join(d, fname)
             detail = load_json(path)
             if detail is None:

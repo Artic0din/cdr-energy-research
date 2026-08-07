@@ -140,3 +140,112 @@ def test_fetch_plan_list_fails_closed_when_pagination_exceeds_cap(
     assert err == "pagination:totalPages=31 exceeds maximum 30"
     assert calls["n"] == 1
     assert not os.path.exists(os.path.join(sweep.cache_dir(slug), "_planlist.json"))
+
+
+def _org(cdr_code: str, cdr_brand: str, org_name: str) -> dict:
+    return {
+        "cdrCode": cdr_code,
+        "cdrBrand": cdr_brand,
+        "orgName": org_name,
+        "tradingName": org_name,
+        "electricityBillURL": f"https://example.test/{cdr_brand}/bill",
+    }
+
+
+def _shared_brand_refdata() -> dict:
+    return {
+        "data": {
+            "organisations": {
+                "indigo": _org("energy-locals", "indigo", "Indigo Power"),
+                "raa": _org("energy-locals", "raa", "RAA Energy"),
+                "agl-1": _org("agl", "agl", "AGL Retail Energy Limited"),
+                "agl-2": _org("agl", "agl", "AGL Sales Pty Limited"),
+            }
+        }
+    }
+
+
+def test_retailer_list_keeps_cohosted_brands_and_deduplicates_brand_records():
+    retailers = sweep.build_retailer_list(_shared_brand_refdata())
+
+    assert {retailer["cdrBrand"] for retailer in retailers} == {
+        "indigo",
+        "raa",
+        "agl",
+    }
+
+
+def test_shared_retailer_filters_by_brand_identity(isolated_cache, monkeypatch):
+    retailers = sweep.build_retailer_list(_shared_brand_refdata())
+    indigo = next(item for item in retailers if item["cdrBrand"] == "indigo")
+    base_to_brands: dict[str, list[str]] = {}
+    for retailer in retailers:
+        base_to_brands.setdefault(retailer["baseUri"], []).append(retailer["cdrBrand"])
+    captured: dict[str, str | None] = {}
+
+    def _fetch(base, slug, brand_filter=None, refresh=False):
+        captured["brand_filter"] = brand_filter
+        return [], None
+
+    monkeypatch.setattr(sweep, "fetch_plan_list", _fetch)
+    monkeypatch.setattr(sweep, "checkpoint", lambda *_args: None)
+
+    sweep.process_retailer(indigo, base_to_brands, refresh=True)
+
+    assert captured["brand_filter"] == "indigo"
+
+
+def test_plan_requests_share_rate_limit_for_one_base_uri(
+    isolated_cache, monkeypatch
+):
+    captured: list[str] = []
+
+    def _request(url, headers, rate_limit_key):
+        captured.append(rate_limit_key)
+        return _planlist_response([]), None, 200
+
+    monkeypatch.setattr(sweep, "polite_get", _request)
+    base = "https://cdr.energymadeeasy.gov.au/energy-locals"
+
+    sweep.fetch_plan_list(base, "indigo", brand_filter="indigo", refresh=True)
+    sweep.fetch_plan_list(base, "raa-energy", brand_filter="raa", refresh=True)
+
+    assert captured == [base, base]
+
+
+def test_current_plan_ids_ignore_stale_unfiltered_shared_cache(
+    isolated_cache,
+):
+    retailer_cache = sweep.cache_dir("indigo")
+    with open(os.path.join(retailer_cache, "_planlist.json"), "w", encoding="utf-8") as file:
+        json.dump(
+            [
+                {
+                    "planId": "FOREIGN",
+                    "fuelType": "ELECTRICITY",
+                    "customerType": "RESIDENTIAL",
+                    "type": "MARKET",
+                }
+            ],
+            file,
+        )
+    with open(
+        os.path.join(retailer_cache, "_planlist_indigo.json"), "w", encoding="utf-8"
+    ) as file:
+        json.dump(
+            [
+                {
+                    "planId": "OWN",
+                    "fuelType": "ELECTRICITY",
+                    "customerType": "RESIDENTIAL",
+                    "type": "MARKET",
+                }
+            ],
+            file,
+        )
+
+    plan_ids = sweep.current_plan_ids(
+        {"slug": "indigo", "cdrBrand": "indigo", "shared_base": True}
+    )
+
+    assert plan_ids == {"OWN"}

@@ -56,15 +56,19 @@ cdr-energy-research/
 | Purpose | Endpoint | Headers | Notes |
 |---|---|---|---|
 | Retailer registry | `GET https://api.energymadeeasy.gov.au/refdata2?keys=organisations,thirdParties` | none | 117 orgs + 72 brokers, no auth |
-| Plan list | `GET {base}/cds-au/v1/energy/plans?fuelType=ELECTRICITY&type=ALL&effective=CURRENT&page-size=1000&brand={cdrCode}&updated-since={iso}` | `x-v: 1` | `brand=` for shared endpoints; `updated-since=` for incremental |
+| Plan list | `GET {base}/cds-au/v1/energy/plans?fuelType=ELECTRICITY&type=ALL&effective=CURRENT&page-size=1000&brand={cdrBrand}&updated-since={iso}` | `x-v: 1` | `brand={cdrBrand}` for shared endpoints; `updated-since=` for incremental |
 | Plan detail | `GET {base}/cds-au/v1/energy/plans/{planId}` | `x-v: 3` | v2 retired Mar 2025 |
 
-`{base}` is `cdr.energymadeeasy.gov.au/<cdrCode>`. AER PDF is the authoritative source; **20 unique base URIs are SHARED across multiple brands** (Energy Locals hosts ARCLINE / Cooperative / RAA / Sonnen / Indigo etc; OVO Energy hosts MYOB OVO + OVO Energy + OVO Energy CTM).
+`{base}` is `cdr.energymadeeasy.gov.au/<cdrCode>`. In the committed EME snapshot,
+three constructed base URIs host multiple brands; those brands share a
+`cdrCode` but have distinct `cdrBrand` values.
 
 ## Headline findings from the sweeps
 
-- **117 CDR-enrolled retailers** (vs 78 in jxeeno's GitHub registry)
-- **20 shared base URIs** — multiple brands share endpoints; `?brand=<cdrCode>` disambiguates
+- **117 committed retailer records** in the current generated snapshot; the
+  corrected sweep deduplicates future regeneration by `cdrBrand`
+- **3 shared constructed base URIs hosting 9 brands** — use
+  `?brand=<cdrBrand>` to isolate a co-hosted brand
 - **10,266 residential ELEC plans** observed in v1 sweep (78 retailers)
 - **1,724 distinct shape signatures** — extreme long tail; top 30 sigs cover only 13% of plans
 - **0 retailers 404 on plan detail** when listed — reliability is excellent

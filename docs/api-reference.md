@@ -12,16 +12,15 @@ Richest metadata source: EME refdata2 (`https://api.energymadeeasy.gov.au/refdat
 
 ### Shared base URIs
 
-20 base URIs host multiple CDR brands. The biggest:
+Three constructed base URIs in the committed EME snapshot host multiple CDR brands:
 
 | Base URI | Brands hosted |
 |---|---|
-| `/energy-locals/` | ARCLINE by RACV, Cooperative Power, Energy Locals Retail, RAA Energy, iO Energy Retail Services, Indigo Power, Sonnen |
+| `/energy-locals/` | Cooperative Power, Energy Locals Retail, RAA Energy, Indigo Power |
 | `/ovo-energy/` | MYOB powered by OVO, OVO Energy, OVO Energy for CTM |
-| `/radian/` | iO Energy, Radian Energy |
-| `/future-x/` | Future X Power (cdrCode=`future-x`), Future X Power (cdrCode=`sunswitch`) |
+| `/future-x/` | Future X Power (`cdrBrand=future-x`), Sunswitch (`cdrBrand=sunswitch`) |
 
-→ When fetching from a shared endpoint, **use `?brand=<cdrCode>`** to filter to one brand's plans.
+→ When fetching from a shared endpoint, **use `?brand=<cdrBrand>`** to filter to one brand's plans.
 
 ## Endpoints
 
@@ -33,7 +32,7 @@ Richest metadata source: EME refdata2 (`https://api.energymadeeasy.gov.au/refdat
 | `fuelType` | query | enum | `ALL` | `ELECTRICITY \| GAS \| DUAL \| ALL` |
 | `effective` | query | enum | `CURRENT` | `CURRENT \| FUTURE \| ALL` — filters by effectiveFrom/To |
 | **`updated-since`** | query | DateTimeString | (none) | **incremental sync key** — only plans modified after this datetime |
-| **`brand`** | query | string | (none) | **filter by brand cdrCode** — solves shared-endpoint disambiguation |
+| **`brand`** | query | string | (none) | **filter by `cdrBrand`** — solves shared-endpoint disambiguation |
 | `page` | query | positive int | 1 | 1-indexed |
 | `page-size` | query | positive int | 25 | Tested: 1000 works |
 | **`x-v`** | header | string | — | **mandatory: `1`** for plans list |
@@ -85,8 +84,8 @@ Error envelope: `ResponseErrorListV2`:
 
 ## Rate limiting
 
-- AER endpoints don't publish formal rate limits but respond cleanly under 1 req/sec/retailer.
-- 12-way parallel across DIFFERENT retailers tested fine.
+- AER endpoints don't publish formal rate limits but respond cleanly under one request per second per base URI.
+- Twelve-way parallelism across different base URIs tested fine.
 - AEMO secondary data holder (consumer-data side) has stricter limits — see [SM#651](https://github.com/ConsumerDataStandardsAustralia/standards-maintenance/issues/651) for proposed `429 + Retry-After` passthrough.
 
 ## Versioning
