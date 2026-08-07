@@ -16,8 +16,10 @@ All notable changes to this research repo.
   pagination now records a `list_error` (previously the partial list was treated
   as a clean sweep), so the publish gate refuses to release a catalogue missing
   that retailer's later-page plans.
+- Added deterministic pull-request validation for Python sources and committed JSON research data.
 
 ### Changed
+- Corrected Repo Assist to allow up to four single-task, issue-backed pull requests per run while retaining Graphite handoff, persistent memory, and bounded spending.
 - Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Added
@@ -47,6 +49,7 @@ All notable changes to this research repo.
   empty-cache guard, current-list filtering of stale details, the completeness
   summary gate, refresh cache-bypass, and partial-list-failure detection. The
   suite is self-contained (no external fixture paths).
+- Continuous integration now compiles the research scripts and validates every tracked JSON dataset on pull requests.
 - Initial repository structure with docs/, data/, scripts/, cache/
 - v1 shape catalog (78 retailers, 10,266 plans, 1,724 signatures) at `docs/shape-catalog-v1.md`
 - v2 sweep script using EME refdata2 (117 retailers) + comprehensive field probe at `scripts/cdr_full_sweep_v2.py`
