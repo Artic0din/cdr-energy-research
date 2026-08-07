@@ -5,6 +5,7 @@ All notable changes to this research repo.
 ## [Unreleased]
 
 ### Changed
+- Standardised Repo Assist on the pinned fleet policy with one-task issue-backed delivery, Graphite handoff, persistent memory, and bounded spending.
 - Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Added
