@@ -14,6 +14,7 @@ tell users to rely on when regenerating the catalog.
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 
 import pytest
@@ -129,3 +130,45 @@ def test_process_retailer_unique_base_uses_no_filter(monkeypatch: pytest.MonkeyP
     sweep.process_retailer(agl, base_to_brands)
 
     assert captured["brand_filter"] is None
+
+
+def test_plan_requests_share_rate_limit_for_one_base_uri(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Co-hosted brands must share one endpoint-level request limiter."""
+    captured: list[str] = []
+    monkeypatch.setattr(sweep, "load_json", lambda _path: None)
+    monkeypatch.setattr(sweep, "save_json", lambda *_args, **_kwargs: None)
+
+    def fake_polite_get(url: str, headers: dict, rate_limit_key: str):
+        captured.append(rate_limit_key)
+        return {"data": {"plans": []}, "meta": {"totalPages": 1}}, None, 200
+
+    monkeypatch.setattr(sweep, "polite_get", fake_polite_get)
+    base = "https://cdr.energymadeeasy.gov.au/energy-locals"
+
+    sweep.fetch_plan_list(base, "indigo", brand_filter="indigo")
+    sweep.fetch_plan_list(base, "raa-energy", brand_filter="raa")
+
+    assert captured == [base, base]
+
+
+def test_current_plan_ids_ignore_stale_unfiltered_shared_cache(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A previous broad list must not leak another brand into extraction."""
+    monkeypatch.setattr(sweep, "CACHE_DIR", str(tmp_path))
+    retailer_cache = tmp_path / "indigo"
+    retailer_cache.mkdir()
+    (retailer_cache / "_planlist.json").write_text(
+        json.dumps([{"planId": "FOREIGN", "fuelType": "ELECTRICITY", "customerType": "RESIDENTIAL", "type": "MARKET"}])
+    )
+    (retailer_cache / "_planlist_indigo.json").write_text(
+        json.dumps([{"planId": "OWN", "fuelType": "ELECTRICITY", "customerType": "RESIDENTIAL", "type": "MARKET"}])
+    )
+
+    plan_ids = sweep.current_plan_ids(
+        {"slug": "indigo", "cdrBrand": "indigo", "shared_base": True}
+    )
+
+    assert plan_ids == {"OWN"}

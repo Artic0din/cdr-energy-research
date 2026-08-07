@@ -33,7 +33,7 @@ Richest metadata source: EME refdata2 (`https://api.energymadeeasy.gov.au/refdat
 | `fuelType` | query | enum | `ALL` | `ELECTRICITY \| GAS \| DUAL \| ALL` |
 | `effective` | query | enum | `CURRENT` | `CURRENT \| FUTURE \| ALL` — filters by effectiveFrom/To |
 | **`updated-since`** | query | DateTimeString | (none) | **incremental sync key** — only plans modified after this datetime |
-| **`brand`** | query | string | (none) | **filter by brand cdrCode** — solves shared-endpoint disambiguation |
+| **`brand`** | query | string | (none) | **filter by `cdrBrand`** — solves shared-endpoint disambiguation |
 | `page` | query | positive int | 1 | 1-indexed |
 | `page-size` | query | positive int | 25 | Tested: 1000 works |
 | **`x-v`** | header | string | — | **mandatory: `1`** for plans list |

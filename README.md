@@ -52,7 +52,9 @@ cdr-energy-research/
 
 ## Headline findings from the sweeps
 
-- **109 CDR-enrolled retailers** (deduped by `cdrBrand` from 117 EME refdata2 org records; vs 78 in jxeeno's GitHub registry)
+- **117 committed retailer records** in the current generated snapshot; the
+  updated sweep deduplicates future regeneration by `cdrBrand` so duplicate
+  organisation records do not collapse or inflate brand coverage.
 - **3 shared base URIs hosting 9 brands** — multiple brands share endpoints; `?brand=<cdrBrand>` disambiguates (co-hosted brands share a `cdrCode`, so `cdrBrand` is the distinguishing filter)
 - **10,266 residential ELEC plans** observed in v1 sweep (78 retailers)
 - **1,724 distinct shape signatures** — extreme long tail; top 30 sigs cover only 13% of plans

@@ -49,7 +49,7 @@ PER_RETAILER_GAP = 1.0
 
 WALL_CLOCK_START = time.time()
 
-retailer_locks: dict[str, Lock] = defaultdict(Lock)
+endpoint_locks: dict[str, Lock] = defaultdict(Lock)
 last_request_at: dict[str, float] = defaultdict(float)
 failed_lock = Lock()
 progress_lock = Lock()
@@ -85,16 +85,18 @@ def http_get(url: str, headers: dict[str, str] | None = None) -> tuple[Any | Non
         return None, f"err:{type(e).__name__}:{e}", 0
 
 
-def polite_get(url: str, headers: dict, slug: str) -> tuple[Any | None, str | None, int]:
+def polite_get(
+    url: str, headers: dict, rate_limit_key: str
+) -> tuple[Any | None, str | None, int]:
     backoff = 2.0
     last_err = None
     for _ in range(MAX_RETRIES):
-        with retailer_locks[slug]:
+        with endpoint_locks[rate_limit_key]:
             now = time.time()
-            wait = (last_request_at[slug] + PER_RETAILER_GAP) - now
+            wait = (last_request_at[rate_limit_key] + PER_RETAILER_GAP) - now
             if wait > 0:
                 time.sleep(wait)
-            last_request_at[slug] = time.time()
+            last_request_at[rate_limit_key] = time.time()
             j, err, status = http_get(url, headers)
         if j is not None:
             return j, None, status
@@ -231,7 +233,7 @@ def fetch_plan_list(base: str, slug: str, brand_filter: str | None = None) -> tu
         if brand_filter:
             params.append(f"brand={brand_filter}")
         url = f"{base.rstrip('/')}/cds-au/v1/energy/plans?{'&'.join(params)}"
-        j, err, _ = polite_get(url, {"x-v": "1"}, slug)
+        j, err, _ = polite_get(url, {"x-v": "1"}, base)
         if j is None:
             return all_plans, err
         try:
@@ -257,7 +259,7 @@ def fetch_plan_detail(base: str, plan_id: str, slug: str) -> tuple[dict | None, 
     if cached is not None:
         return cached, None
     url = f"{base.rstrip('/')}/cds-au/v1/energy/plans/{plan_id}"
-    j, err, status = polite_get(url, {"x-v": "3"}, slug)
+    j, err, status = polite_get(url, {"x-v": "3"}, base)
     if j is None:
         return None, f"{err} (status={status})"
     save_json(cache_file, j)
@@ -270,6 +272,23 @@ def is_residential_electricity(p: dict) -> bool:
         and p.get("customerType") == "RESIDENTIAL"
         and p.get("type") in ("MARKET", "STANDING")
     )
+
+
+def current_plan_ids(stat: dict) -> set[str]:
+    """Return plan IDs from the current list cache for one retailer brand."""
+    brand = stat.get("cdrBrand") if stat.get("shared_base") else None
+    cache_name = f"_planlist_{brand}.json" if brand else "_planlist.json"
+    cached = load_json(os.path.join(cache_dir(stat["slug"]), cache_name))
+    if isinstance(cached, dict):
+        cached = cached.get("plans", cached.get("data", {}).get("plans", []))
+    if not isinstance(cached, list):
+        return set()
+    return {
+        plan_id
+        for plan in cached
+        if isinstance(plan, dict) and is_residential_electricity(plan)
+        if (plan_id := plan.get("planId"))
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -871,16 +890,23 @@ def main() -> None:
     ev_overlay_plans: list[tuple[str, str, str]] = []
 
     n_processed = 0
+    slug_to_stat = {stat["slug"]: stat for stat in stats}
     for slug in os.listdir(CACHE_DIR):
         if slug.startswith("_"):
             continue
         d = os.path.join(CACHE_DIR, slug)
         if not os.path.isdir(d):
             continue
+        stat = slug_to_stat.get(slug)
+        if stat is None:
+            continue
+        allowed_plan_ids = current_plan_ids(stat)
         for fname in os.listdir(d):
             if fname.startswith("_") or not fname.endswith(".json"):
                 continue
             pid = fname[:-5]
+            if pid not in allowed_plan_ids:
+                continue
             path = os.path.join(d, fname)
             detail = load_json(path)
             if detail is None:
