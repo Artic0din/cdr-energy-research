@@ -46,6 +46,11 @@ if: needs.pre_activation.outputs.check_result == 'success'
 
 timeout-minutes: 60
 
+concurrency:
+  group: repo-assist-${{ github.repository }}
+  cancel-in-progress: false
+  queue: max
+
 permissions:
   actions: read
   checks: read
