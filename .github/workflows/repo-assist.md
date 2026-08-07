@@ -184,8 +184,10 @@ steps:
       task_ids     = list(weights.keys())
       task_weights = [weights[t] for t in task_ids]
 
-      # Weighted selection of up to four independent tasks
-      NUM_TASKS_PER_RUN = 4
+      # Select only as many independent tasks as the open-PR cap can accommodate.
+      MAX_OPEN_PRS = 4
+      MAX_TASKS_PER_RUN = 4
+      NUM_TASKS_PER_RUN = min(MAX_TASKS_PER_RUN, max(0, MAX_OPEN_PRS - repo_assist_prs))
       chosen, seen = [], set()
       for t in rng.choices(task_ids, weights=task_weights, k=30):
           if t not in seen:
@@ -260,9 +262,9 @@ Read memory at the **start** of every run; update it at the **end**.
 
 ## Workflow
 
-Each run, the deterministic pre-step collects live repo data (open issue count, unlabelled issue count, open Repo Assist PRs, other open PRs), computes a **weighted probability** for each task, and selects **one task** for this run using a seeded random draw. The weights and selected tasks are printed in the workflow logs. You will find the selection in `/tmp/gh-aw/task_selection.json`.
+Each run, the deterministic pre-step collects live repo data (open issue count, unlabelled issue count, open Repo Assist PRs, other open PRs), computes a **weighted probability** for each task, and selects up to four tasks using a seeded random draw. The number selected is limited to the remaining slots under the four-open-Repo-Assist-PR cap. The weights and selected tasks are printed in the workflow logs. You will find the selection in `/tmp/gh-aw/task_selection.json`.
 
-**Read the task selection**: at the start of your run, read `/tmp/gh-aw/task_selection.json` and confirm the selected task in your opening reasoning. Execute **that task** (plus the mandatory Task 11). If a selected task is not applicable to the current repo state, substitute its fallback task rather than doing nothing. Record the substitution in the Task 11 run history entry.
+**Read the task selection**: at the start of your run, read `/tmp/gh-aw/task_selection.json` and confirm the selected tasks in your opening reasoning. Execute each selected task independently (plus the mandatory Task 11), with exactly one issue and one pull request per implementation task. If a selected task is not applicable to the current repo state, substitute its fallback task rather than doing nothing. Record substitutions in the Task 11 run history entry.
 
 | Selected task | Not applicable when… | Fallback |
 |---|---|---|
