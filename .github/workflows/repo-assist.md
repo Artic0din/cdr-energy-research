@@ -14,7 +14,7 @@ description: |
   Always polite, constructive, and mindful of the project's goals.
 
 imports:
-  - Plaintext-Lab/agentic-workflows/.github/workflows/shared/repo-assist-policy.md@428a0d6dbb101b2b481981123557789f4bcf25fc
+  - Plaintext-Lab/agentic-workflows/.github/workflows/shared/repo-assist-policy.md@06b1eea4b7c613c2eda825faf49116e19e593a83
 
 on:
   schedule: weekly
@@ -45,7 +45,17 @@ if: needs.pre_activation.outputs.check_result == 'success'
 
 timeout-minutes: 60
 
-permissions: read-all
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  deployments: read
+  discussions: read
+  issues: read
+  packages: read
+  pull-requests: read
+  security-events: read
+  statuses: read
 
 network:
   allowed:
