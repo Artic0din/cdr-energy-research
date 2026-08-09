@@ -5,6 +5,10 @@ All notable changes to this research repo.
 ## [Unreleased]
 
 ### Fixed
+
+- Corrected shared-base-URI counts, documented the Radian endpoint, and aligned rate-limit guidance with the base-URI throttle.
+
+### Fixed
 - Shared PRD endpoints now deduplicate retailers by `cdrBrand`, filter plan
   lists by that brand identity, serialize requests per base URI, and exclude
   stale mixed-brand detail files from catalogue extraction.

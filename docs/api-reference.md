@@ -12,13 +12,14 @@ Richest metadata source: EME refdata2 (`https://api.energymadeeasy.gov.au/refdat
 
 ### Shared base URIs
 
-Three constructed base URIs in the committed EME snapshot host multiple CDR brands:
+Four constructed base URIs in the committed EME snapshot host multiple CDR brands:
 
 | Base URI | Brands hosted |
 |---|---|
 | `/energy-locals/` | Cooperative Power, Energy Locals Retail, RAA Energy, Indigo Power |
 | `/ovo-energy/` | MYOB powered by OVO, OVO Energy, OVO Energy for CTM |
 | `/future-x/` | Future X Power (`cdrBrand=future-x`), Sunswitch (`cdrBrand=sunswitch`) |
+| `/radian/` | Radian Energy, iO Energy |
 
 → When fetching from a shared endpoint, **use `?brand=<cdrBrand>`** to filter to one brand's plans.
 
