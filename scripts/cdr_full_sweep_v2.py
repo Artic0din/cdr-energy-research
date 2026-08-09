@@ -9,7 +9,7 @@ Improvements over v1:
 - Output comprehensive catalog: shape signatures + retailer matrix +
   enum reference + GST flags + parser spec + registry comparison
 
-Stdlib only. Resumable. Polite (1 req/sec/retailer, 12-way parallel).
+Stdlib only. Resumable. Polite (1 req/sec/base URI, 12-way parallel).
 
 Cache layout: /tmp/cdr-cache/{slug}/{planId}.json (compatible with v1 cache)
 """
