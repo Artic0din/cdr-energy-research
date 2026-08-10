@@ -55,8 +55,13 @@ Dev tests: `python -m pytest tests/ -q` (needs `requirements-dev.txt`). No lint 
 
 ## Agent Guard
 
-- This policy applies to every coding agent, including Codex, Claude, Cursor, GitHub Copilot, Devin, and GitHub-hosted agents.
-- Before the first repository tool call, start a contract with `.agent-guard/agent-guard begin --terminal-action <report-only|fix-and-push|full-remediation> --deliverable "<outcome>"`.
-- Run `.agent-guard/agent-guard preflight`, keep every requested deliverable explicit, and record exact validation, push, review-thread, and CI evidence as required by the chosen terminal action.
-- Finish only when `.agent-guard/agent-guard check-complete` passes; archive a superseded run with `.agent-guard/agent-guard abort --reason "<exact reason>"`.
-- Agents must not merge pull requests; hand a fully validated, review-resolved pull request to the Graphite/GitHub merge gate.
+- This policy applies to every coding agent, including Codex, Claude, Cursor,
+  GitHub Copilot, Devin, and GitHub-hosted agents.
+- Before the first repository tool call, start a contract with
+  `.agent-guard/agent-guard begin --terminal-action <action> --deliverable "<outcome>"`.
+- Run `.agent-guard/agent-guard preflight`, keep every requested deliverable
+  explicit, and record the evidence required by the chosen terminal action.
+- Finish only when `.agent-guard/agent-guard check-complete` passes.
+  Archive a superseded run with `.agent-guard/agent-guard abort --reason "<reason>"`.
+- Agents must not merge pull requests.
+  Hand validated, review-resolved work to the Graphite/GitHub merge gate.
