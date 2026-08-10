@@ -1,0 +1,19 @@
+name: Agent delivery policy
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  validate:
+    name: Validate agent delivery policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Plaintext-Lab/agentic-workflows/.github/actions/pr-policy@b1abdfdebce6f1c7178aa155f6fb27316b00b21f
+        with:
+          github-token: ${{ github.token }}
