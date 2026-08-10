@@ -188,6 +188,9 @@ steps:
       MAX_OPEN_PRS = 4
       MAX_TASKS_PER_RUN = 4
       NUM_TASKS_PER_RUN = min(MAX_TASKS_PER_RUN, max(0, MAX_OPEN_PRS - repo_assist_prs))
+      eligible_task_ids = [3, 4, 5, 6, 8, 9, 10]
+      task_ids = [task_id for task_id in task_ids if task_id in eligible_task_ids]
+      task_weights = [weights[task_id] for task_id in task_ids]
       chosen, seen = [], set()
       for t in rng.choices(task_ids, weights=task_weights, k=30):
           if t not in seen:
@@ -264,20 +267,20 @@ Read memory at the **start** of every run; update it at the **end**.
 
 Each run, the deterministic pre-step collects live repo data (open issue count, unlabelled issue count, open Repo Assist PRs, other open PRs), computes a **weighted probability** for each task, and selects up to four tasks using a seeded random draw. The number selected is limited to the remaining slots under the four-open-Repo-Assist-PR cap. The weights and selected tasks are printed in the workflow logs. You will find the selection in `/tmp/gh-aw/task_selection.json`.
 
-**Read the task selection**: at the start of your run, read `/tmp/gh-aw/task_selection.json` and confirm the selected tasks in your opening reasoning. Execute each selected task independently (plus the mandatory Task 11), with exactly one issue and one pull request per implementation task. If a selected task is not applicable to the current repo state, substitute its fallback task rather than doing nothing. Record substitutions in the Task 11 run history entry.
+**Read the task selection**: at the start of your run, read `/tmp/gh-aw/task_selection.json` and confirm the selected tasks in your opening reasoning. Execute each selected task independently (plus the mandatory Task 11), with exactly one issue and one pull request per implementation task. If a selected task is not applicable to the current repo state, substitute its fallback task rather than doing nothing. If that fallback is also not applicable, mark the slot blocked with the exact reason; never switch to Tasks 1, 2, or 7. Record substitutions and blocked slots in the Task 11 run history entry.
 
 | Selected task | Not applicable when… | Fallback |
 |---|---|---|
 | Task 1 (Issue Labelling) | All open issues already labelled | Task 2 |
 | Task 2 (Issue Comment) | All open issues already have a recent Repo Assist comment and no new human activity | Task 1 |
-| Task 3 (Issue Fix) | No issues labelled `bug`, `help wanted`, or `good first issue` that are fixable | Task 2 |
+| Task 3 (Issue Fix) | No issues labelled `bug`, `help wanted`, or `good first issue` that are fixable | Task 9 |
 | Task 4 (Engineering Investments) | No actionable dependency updates, CI gaps, or build improvements identifiable | Task 5 |
 | Task 5 (Coding Improvements) | No clearly beneficial, low-risk improvements identifiable after reviewing the codebase | Task 9 |
-| Task 6 (Maintain Repo Assist PRs) | No open Repo Assist PRs exist | Task 2 |
+| Task 6 (Maintain Repo Assist PRs) | No open Repo Assist PRs exist | Task 5 |
 | Task 7 (Stale PR Nudges) | No non-Repo-Assist PRs stale 14+ days, or all already nudged | Task 2 |
 | Task 8 (Performance Improvements) | No measurable performance opportunities identifiable | Task 9 |
 | Task 9 (Testing Improvements) | Test coverage is already comprehensive and no gaps identified | Task 5 |
-| Task 10 (Take Repo Forward) | In-progress work from memory is blocked or complete; no valuable next step | Task 2 |
+| Task 10 (Take Repo Forward) | In-progress work from memory is blocked or complete; no valuable next step | Task 5 |
 
 The weighting scheme naturally adapts to repo state:
 
@@ -320,7 +323,7 @@ Update memory with labels applied and cursor position.
 1. Review issues labelled `bug`, `help wanted`, or `good first issue`, plus any identified as fixable during investigation.
 2. For each fixable issue:
    a. Check memory — skip if you've already tried and the attempt is still open. Never create duplicate PRs.
-   b. Create a fresh branch off the default branch of the repository: `repo-assist/fix-issue-<N>-<desc>`.
+   b. Create a fresh branch off the default branch of the repository: `repo-assist/<N>-<desc>`.
    c. Implement a minimal, surgical fix. Do not refactor unrelated code.
    d. **Build and test (required)**: do not create a PR if the build fails or tests fail due to your changes. If tests fail due to infrastructure, create the PR but document it.
    e. Add a test for the bug if feasible; re-run tests.
