@@ -79,7 +79,8 @@ AER PDF de-facto lists base URIs (with brand annotations); EME lists brands (wit
 - Future X Power (cdrBrand=future-x)
 - Future X Power (cdrBrand=sunswitch)
 
-→ When fetching from a shared base URI, use `?brand=<cdrBrand>` to disambiguate plans.
+→ When fetching from a shared base URI, use the `brand=<cdrBrand>` query
+parameter to disambiguate plans.
 
 ## Recommended discovery strategy for PriceHawk
 
