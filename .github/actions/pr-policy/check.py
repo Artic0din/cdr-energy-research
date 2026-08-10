@@ -16,11 +16,16 @@ CONVENTIONAL_TITLE = re.compile(
     r"(?:\([a-z0-9][a-z0-9._/-]*\))?: .+"
 )
 ISSUE_BRANCH = re.compile(r"(?:^|/)(\d+)-[a-z0-9]", re.IGNORECASE)
-ISSUE_LINK = re.compile(r"(?im)^\s*(?:fixes|closes|resolves)\s+#(\d+)\b")
+ISSUE_LINK = re.compile(r"(?im)^\s*(?:[-*+]\s*)?(?:fixes|closes|resolves)\s+#(\d+)\b")
 VALIDATION_SECTION = re.compile(
     r"(?ims)^#{1,3}\s+(?:test plan|tests?|validation|verification)\s*$"
     r"(?P<content>.*?)(?=^#{1,3}\s+|\Z)"
 )
+NEGATIVE_VALIDATION = re.compile(
+    r"(?i)^(?:n/?a|none|not applicable|not required|not run|not tested|pending|"
+    r"skipped|todo)(?:[.!])?$"
+)
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 def validate_pull_request(pull_request: dict[str, Any]) -> list[str]:
@@ -49,11 +54,13 @@ def validate_pull_request(pull_request: dict[str, Any]) -> list[str]:
 
 
 def meaningful_validation(content: str) -> bool:
-    for line in content.splitlines():
+    for line in HTML_COMMENT.sub("", content).splitlines():
         stripped = line.strip().lstrip("-* ").strip()
-        if not stripped or stripped.startswith("<!--"):
+        if not stripped or re.match(r"^\[\s\]", stripped):
             continue
         if ISSUE_LINK.fullmatch(stripped):
+            continue
+        if NEGATIVE_VALIDATION.fullmatch(stripped):
             continue
         return True
     return False

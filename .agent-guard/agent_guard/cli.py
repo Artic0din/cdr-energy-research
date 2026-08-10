@@ -12,8 +12,8 @@ from .contract import (
     ContractError,
     abort_contract,
     add_delegate,
-    archive_contract,
-    completion_failures,
+    complete_and_archive,
+    contract_lock,
     create_contract,
     read_contract,
     record_evidence,
@@ -21,6 +21,7 @@ from .contract import (
     set_delegate_status,
     set_deliverable_status,
     state_path,
+    update_contract,
     write_contract,
 )
 from .git_policy import secret_findings, validate_git_action, validate_preflight
@@ -36,13 +37,14 @@ def load(args: argparse.Namespace) -> tuple[Path, dict]:
 
 def cmd_begin(args: argparse.Namespace) -> int:
     root = repository_root(Path(args.cwd) if args.cwd else None)
-    path = state_path(root)
-    if path.exists():
-        raise ContractError(
-            "An active contract already exists; finish or close it first"
-        )
-    contract = create_contract(root, args.terminal_action, args.deliverable)
-    write_contract(root, contract)
+    with contract_lock(root):
+        path = state_path(root)
+        if path.exists():
+            raise ContractError(
+                "An active contract already exists; finish or close it first"
+            )
+        contract = create_contract(root, args.terminal_action, args.deliverable)
+        write_contract(root, contract)
     print(json.dumps(contract, indent=2))
     return 0
 
@@ -54,35 +56,43 @@ def cmd_show(args: argparse.Namespace) -> int:
 
 
 def cmd_deliverable(args: argparse.Namespace) -> int:
-    root, contract = load(args)
-    set_deliverable_status(contract, args.id, args.status, args.evidence)
-    write_contract(root, contract)
+    root = repository_root(Path(args.cwd) if args.cwd else None)
+    update_contract(
+        root,
+        lambda contract: set_deliverable_status(
+            contract, args.id, args.status, args.evidence
+        ),
+    )
     return 0
 
 
 def cmd_evidence(args: argparse.Namespace) -> int:
-    root, contract = load(args)
-    record_evidence(contract, args.type, args.value)
-    write_contract(root, contract)
+    root = repository_root(Path(args.cwd) if args.cwd else None)
+    update_contract(
+        root, lambda contract: record_evidence(contract, args.type, args.value, root)
+    )
     return 0
 
 
 def cmd_add_delegate(args: argparse.Namespace) -> int:
-    root, contract = load(args)
-    add_delegate(contract, args.id, args.scope)
-    write_contract(root, contract)
+    root = repository_root(Path(args.cwd) if args.cwd else None)
+    update_contract(root, lambda contract: add_delegate(contract, args.id, args.scope))
     return 0
 
 
 def cmd_delegate_result(args: argparse.Namespace) -> int:
-    root, contract = load(args)
-    set_delegate_status(contract, args.id, args.status, args.evidence)
-    write_contract(root, contract)
+    root = repository_root(Path(args.cwd) if args.cwd else None)
+    update_contract(
+        root,
+        lambda contract: set_delegate_status(
+            contract, args.id, args.status, args.evidence
+        ),
+    )
     return 0
 
 
 def cmd_preflight(args: argparse.Namespace) -> int:
-    root, contract = load(args)
+    root = repository_root(Path(args.cwd) if args.cwd else None)
     result = validate_preflight(
         root,
         [Path(path) for path in args.path],
@@ -91,22 +101,23 @@ def cmd_preflight(args: argparse.Namespace) -> int:
         args.remote_ref,
         Path(args.expected_environment) if args.expected_environment else None,
     )
-    contract["preflight"] = result
-    write_contract(root, contract)
+    update_contract(root, lambda contract: contract.__setitem__("preflight", result))
     print(json.dumps(result, indent=2))
     return 1 if result["failures"] else 0
 
 
 def cmd_check_complete(args: argparse.Namespace) -> int:
-    root, contract = load(args)
-    failures = completion_failures(contract, root)
-    print_result(failures, "Run contract is complete")
+    root = repository_root(Path(args.cwd) if args.cwd else None)
+    failures, archive = complete_and_archive(root)
+    success = f"Run contract is complete and archived at {archive}"
+    print_result(failures, success)
     return 1 if failures else 0
 
 
 def cmd_check_action(args: argparse.Namespace) -> int:
     root, contract = load(args)
-    failures = validate_git_action(root, contract, args.action)
+    arguments = args.arguments[1:] if args.arguments[:1] == ["--"] else args.arguments
+    failures = validate_git_action(root, contract, args.action, tuple(arguments))
     print_result(failures, f"{args.action} is allowed")
     return 1 if failures else 0
 
@@ -119,19 +130,20 @@ def cmd_scan_outgoing(args: argparse.Namespace) -> int:
 
 
 def cmd_close(args: argparse.Namespace) -> int:
-    root, contract = load(args)
-    failures = completion_failures(contract, root)
-    if failures:
+    root = repository_root(Path(args.cwd) if args.cwd else None)
+    failures, archive = complete_and_archive(root)
+    if failures or archive is None:
         print_result(failures, "")
         return 1
-    archive = archive_contract(root, contract)
     print(f"Archived completed contract at {archive}")
     return 0
 
 
 def cmd_abort(args: argparse.Namespace) -> int:
-    root, contract = load(args)
-    archive = abort_contract(root, contract, args.reason)
+    root = repository_root(Path(args.cwd) if args.cwd else None)
+    with contract_lock(root):
+        contract = read_contract(root)
+        archive = abort_contract(root, contract, args.reason)
     print(f"Archived aborted contract at {archive}")
     return 0
 
@@ -206,6 +218,11 @@ def build_parser() -> argparse.ArgumentParser:
     action = subparsers.add_parser("check-action")
     add_common_cwd(action)
     action.add_argument("action", choices=("commit", "push", "merge"))
+    action.add_argument(
+        "arguments",
+        nargs=argparse.REMAINDER,
+        help="Arguments for the guarded Git action, after --",
+    )
     action.set_defaults(handler=cmd_check_action)
     scan = subparsers.add_parser("scan-outgoing")
     add_common_cwd(scan)

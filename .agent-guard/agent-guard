@@ -1,4 +1,5 @@
 #!/bin/sh
 set -eu
-guard_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$guard_root${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m agent_guard "$@"
+guard_root=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$guard_root${PYTHONPATH:+:$PYTHONPATH}" \
+  exec python3 -m agent_guard "$@"

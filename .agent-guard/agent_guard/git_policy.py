@@ -8,11 +8,13 @@ import re
 import subprocess
 from typing import Any
 
-from .contract import git_output, now_iso
+from .contract import git_output, now_iso, worktree_digest
 
 
 FORBIDDEN_FILE_PATTERNS = (
     re.compile(r"(^|/)\.env($|\.)"),
+    re.compile(r"(^|/)\.dev\.vars($|\.)"),
+    re.compile(r"(^|/)(?:credentials|service-account)\.json$", re.IGNORECASE),
     re.compile(r"\.(pem|p12|pfx|key)$", re.IGNORECASE),
 )
 SECRET_PATTERNS = (
@@ -22,8 +24,10 @@ SECRET_PATTERNS = (
     re.compile(r"AKIA[A-Z0-9]{16}"),
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(
-        r"(?i)(?:api[_-]?key|secret|password|access[_-]?token)\s*[:=]\s*"
-        r"['\"](?!example|placeholder|redacted|<redacted>|\{|\$)[^'\"\s]{8,}['\"]"
+        r"(?i)(?:api[_-]?key|secret|password|access[_-]?token|_authToken)"
+        r"\s*[:=]\s*['\"]?"
+        r"(?!example\b|placeholder\b|redacted\b|<redacted>|\{|\$)"
+        r"[A-Za-z0-9_./+=-]{8,}"
     ),
 )
 
@@ -40,19 +44,27 @@ def command_output(root: Path, *args: str) -> tuple[int, str, str]:
     return result.returncode, result.stdout.strip(), result.stderr.strip()
 
 
-def default_base(root: Path) -> str:
+def default_base(root: Path) -> str | None:
     for candidate in ("@{upstream}", "origin/main", "origin/master"):
         code, _, _ = command_output(root, "git", "rev-parse", "--verify", candidate)
         if code == 0:
             return candidate
-    code, _, _ = command_output(root, "git", "rev-parse", "--verify", "HEAD~1")
-    if code == 0:
-        return "HEAD~1"
-    return git_output(root, "hash-object", "-t", "tree", "/dev/null")
+    return None
 
 
-def outgoing_commits(root: Path, base: str | None = None) -> list[str]:
+def outgoing_commits(
+    root: Path, base: str | None = None, heads: tuple[str, ...] = ()
+) -> list[str]:
+    if heads:
+        resolved = [git_output(root, "rev-parse", "--verify", head) for head in heads]
+        return git_output(
+            root, "rev-list", "--reverse", *resolved, "--not", "--remotes=origin"
+        ).splitlines()
     reference = base or default_base(root)
+    if reference is None:
+        return git_output(
+            root, "rev-list", "--reverse", "HEAD", "--not", "--remotes=origin"
+        ).splitlines()
     merge_base_code, merge_base, _ = command_output(
         root, "git", "merge-base", reference, "HEAD"
     )
@@ -60,9 +72,11 @@ def outgoing_commits(root: Path, base: str | None = None) -> list[str]:
     return git_output(root, "rev-list", "--reverse", f"{start}..HEAD").splitlines()
 
 
-def secret_findings(root: Path, base: str | None = None) -> list[str]:
+def secret_findings(
+    root: Path, base: str | None = None, heads: tuple[str, ...] = ()
+) -> list[str]:
     findings: list[str] = []
-    for commit in outgoing_commits(root, base):
+    for commit in outgoing_commits(root, base, heads):
         names = git_output(
             root,
             "diff-tree",
@@ -73,22 +87,40 @@ def secret_findings(root: Path, base: str | None = None) -> list[str]:
             "-r",
             commit,
         ).splitlines()
-        for name in names:
-            if is_forbidden_file(name):
-                findings.append(f"{commit[:12]} forbidden file: {name}")
         diff = git_output(root, "show", "--format=", "--unified=0", commit)
-        added_lines = "\n".join(
-            line[1:]
-            for line in diff.splitlines()
-            if line.startswith("+") and not line.startswith("+++")
-        )
-        for pattern in SECRET_PATTERNS:
-            if pattern.search(added_lines):
-                findings.append(
-                    f"{commit[:12]} secret-like content matched detector: "
-                    f"{pattern.pattern}"
-                )
+        findings.extend(secret_findings_for_diff(commit[:12], names, diff))
     return list(dict.fromkeys(findings))
+
+
+def staged_secret_findings(root: Path) -> list[str]:
+    names = git_output(
+        root,
+        "diff",
+        "--cached",
+        "--name-only",
+        "--diff-filter=ACMRTUXB",
+    ).splitlines()
+    diff = git_output(root, "diff", "--cached", "--unified=0")
+    return secret_findings_for_diff("staged", names, diff)
+
+
+def secret_findings_for_diff(identifier: str, names: list[str], diff: str) -> list[str]:
+    findings = [
+        f"{identifier} forbidden file: {name}"
+        for name in names
+        if is_forbidden_file(name)
+    ]
+    added_lines = "\n".join(
+        line[1:]
+        for line in diff.splitlines()
+        if line.startswith("+") and not line.startswith("+++")
+    )
+    for pattern in SECRET_PATTERNS:
+        if pattern.search(added_lines):
+            findings.append(
+                f"{identifier} secret-like content matched detector: {pattern.pattern}"
+            )
+    return findings
 
 
 def is_forbidden_file(name: str) -> bool:
@@ -115,6 +147,7 @@ def validate_preflight(
             failures.append(f"path does not exist: {resolved}")
         checked_paths.append(str(resolved))
     head = git_output(root, "rev-parse", "HEAD")
+    branch = git_output(root, "branch", "--show-current")
     if expected_head and head != expected_head:
         failures.append(f"HEAD mismatch: expected {expected_head}, actual {head}")
     remote_head = None
@@ -128,7 +161,11 @@ def validate_preflight(
                     f"remote SHA mismatch: expected {expected_remote_head}, actual {remote_head}"
                 )
     virtual_environment = os.environ.get("VIRTUAL_ENV")
-    if virtual_environment:
+    if expected_environment and not virtual_environment:
+        failures.append(
+            f"VIRTUAL_ENV is not active; expected {expected_environment.resolve()}"
+        )
+    elif virtual_environment:
         environment_path = Path(virtual_environment).resolve()
         if not environment_path.exists():
             failures.append(f"VIRTUAL_ENV does not exist: {virtual_environment}")
@@ -147,6 +184,7 @@ def validate_preflight(
     return {
         "checked_at": now_iso(),
         "head": head,
+        "branch": branch,
         "remote_head": remote_head,
         "paths": checked_paths,
         "virtual_environment": virtual_environment,
@@ -165,23 +203,57 @@ def resolve_remote_head(root: Path, remote_ref: str, failures: list[str]) -> str
     return output.split()[0]
 
 
-def protected_push_failures(arguments: tuple[str, ...]) -> list[str]:
+def protected_push_failures(
+    arguments: tuple[str, ...], require_refspec: bool = True
+) -> list[str]:
     failures: list[str] = []
-    if any(argument in {"--all", "--mirror", "--prune"} for argument in arguments):
+    if any(
+        argument
+        in {
+            "--all",
+            "--branches",
+            "--force",
+            "--force-with-lease",
+            "--mirror",
+            "--prune",
+            "-f",
+        }
+        or argument.startswith("--force-with-lease=")
+        for argument in arguments
+    ):
         failures.append("push option can update or delete protected remote branches")
     delete_index = next(
-        (index for index, argument in enumerate(arguments) if argument == "--delete"),
+        (
+            index
+            for index, argument in enumerate(arguments)
+            if argument in {"--delete", "-d"}
+        ),
         None,
     )
     if delete_index is not None:
         for argument in arguments[delete_index + 1 :]:
             if protected_ref(argument):
                 failures.append(f"push targets protected remote ref {argument}")
-    for argument in push_refspecs(arguments):
+    refspecs = push_refspecs(arguments)
+    if require_refspec and not refspecs and delete_index is None:
+        failures.append("git push must name an explicit source refspec")
+    for argument in refspecs:
         destination = argument.lstrip("+").split(":", 1)[-1]
         if protected_ref(destination):
             failures.append(f"push targets protected remote ref {destination}")
     return list(dict.fromkeys(failures))
+
+
+def push_sources(arguments: tuple[str, ...]) -> tuple[str, ...]:
+    if any(argument in {"--delete", "-d"} for argument in arguments):
+        return ()
+    sources: list[str] = []
+    for refspec in push_refspecs(arguments):
+        normalized = refspec.lstrip("+")
+        source = normalized.split(":", 1)[0]
+        if source:
+            sources.append(source)
+    return tuple(dict.fromkeys(sources))
 
 
 def push_refspecs(arguments: tuple[str, ...]) -> list[str]:
@@ -219,19 +291,50 @@ def validate_git_action(
     contract: dict[str, Any],
     action: str,
     arguments: tuple[str, ...] = (),
+    source: str = "git",
 ) -> list[str]:
     failures: list[str] = []
     branch = git_output(root, "branch", "--show-current")
     if action == "pr-merge":
         return ["agents are not authorized to merge pull requests"]
-    if action in {"commit", "push", "merge"} and branch in {"main", "master"}:
+    mutating_actions = {"commit", "history-write", "merge", "push"}
+    if action in mutating_actions and branch in {"main", "master"}:
         failures.append(f"{action} on protected branch {branch} is not allowed")
     if contract["terminal_action"] == "report-only":
         failures.append(f"report-only contract does not authorize {action}")
+    if action in mutating_actions:
+        preflight = contract.get("preflight")
+        if preflight is None:
+            failures.append(f"{action} requires a successful repository preflight")
+        else:
+            failures.extend(
+                f"{action} blocked by preflight failure: {failure}"
+                for failure in preflight.get("failures", [])
+            )
+            checked_head = preflight.get("head")
+            current_head = git_output(root, "rev-parse", "HEAD")
+            checked_branch = preflight.get("branch")
+            current_branch = git_output(root, "branch", "--show-current")
+            if checked_head != current_head or checked_branch != current_branch:
+                failures.append(
+                    f"{action} requires a fresh preflight for current checkout "
+                    f"{current_branch or '(detached)'} at {current_head}"
+                )
+    if action == "commit":
+        failures.extend(staged_secret_findings(root))
     if action == "push":
-        failures.extend(protected_push_failures(arguments))
-        failures.extend(secret_findings(root))
-        evidence_types = {item.get("type") for item in contract["evidence"]}
-        if "validation" not in evidence_types:
+        failures.extend(
+            protected_push_failures(arguments, require_refspec=source == "git")
+        )
+        heads = push_sources(arguments) if source == "git" else ()
+        failures.extend(secret_findings(root, heads=heads))
+        validations = [
+            item for item in contract["evidence"] if item.get("type") == "validation"
+        ]
+        if not validations:
             failures.append("push requires recorded validation evidence")
+        elif validations[-1].get("worktree_digest") != worktree_digest(root):
+            failures.append(
+                "push requires validation evidence bound to current repository contents"
+            )
     return failures
