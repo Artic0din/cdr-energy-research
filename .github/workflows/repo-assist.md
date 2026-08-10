@@ -181,8 +181,7 @@ steps:
       run_id = int(os.environ.get('GITHUB_RUN_ID', '0'))
       rng = random.Random(run_id)
 
-      task_ids     = list(weights.keys())
-      task_weights = [weights[t] for t in task_ids]
+      task_ids = list(weights.keys())
 
       # Select only as many independent tasks as the open-PR cap can accommodate.
       MAX_OPEN_PRS = 4
@@ -267,26 +266,23 @@ Read memory at the **start** of every run; update it at the **end**.
 
 Each run, the deterministic pre-step collects live repo data (open issue count, unlabelled issue count, open Repo Assist PRs, other open PRs), computes a **weighted probability** for each task, and selects up to four tasks using a seeded random draw. The number selected is limited to the remaining slots under the four-open-Repo-Assist-PR cap. The weights and selected tasks are printed in the workflow logs. You will find the selection in `/tmp/gh-aw/task_selection.json`.
 
-**Read the task selection**: at the start of your run, read `/tmp/gh-aw/task_selection.json` and confirm the selected tasks in your opening reasoning. Execute each selected task independently (plus the mandatory Task 11), with exactly one issue and one pull request per implementation task. If a selected task is not applicable to the current repo state, substitute its fallback task rather than doing nothing. If that fallback is also not applicable, mark the slot blocked with the exact reason; never switch to Tasks 1, 2, or 7. Record substitutions and blocked slots in the Task 11 run history entry.
+**Read the task selection**: at the start of your run, read `/tmp/gh-aw/task_selection.json` and confirm the selected tasks in your opening reasoning. Execute each selected task independently (plus the mandatory Task 11), with exactly one issue and one pull request per implementation task. If a selected task is not applicable to the current repo state, substitute its fallback task rather than doing nothing. If that fallback is also not applicable, mark the slot blocked with the exact reason. Substitutions originating from selected implementation tasks must never switch to Tasks 1, 2, or 7. Record substitutions and blocked slots in the Task 11 run history entry.
 
 | Selected task | Not applicable when… | Fallback |
 |---|---|---|
-| Task 1 (Issue Labelling) | All open issues already labelled | Task 2 |
-| Task 2 (Issue Comment) | All open issues already have a recent Repo Assist comment and no new human activity | Task 1 |
 | Task 3 (Issue Fix) | No issues labelled `bug`, `help wanted`, or `good first issue` that are fixable | Task 9 |
 | Task 4 (Engineering Investments) | No actionable dependency updates, CI gaps, or build improvements identifiable | Task 5 |
 | Task 5 (Coding Improvements) | No clearly beneficial, low-risk improvements identifiable after reviewing the codebase | Task 9 |
 | Task 6 (Maintain Repo Assist PRs) | No open Repo Assist PRs exist | Task 5 |
-| Task 7 (Stale PR Nudges) | No non-Repo-Assist PRs stale 14+ days, or all already nudged | Task 2 |
 | Task 8 (Performance Improvements) | No measurable performance opportunities identifiable | Task 9 |
 | Task 9 (Testing Improvements) | Test coverage is already comprehensive and no gaps identified | Task 5 |
 | Task 10 (Take Repo Forward) | In-progress work from memory is blocked or complete; no valuable next step | Task 5 |
 
-The weighting scheme naturally adapts to repo state:
+The implementation-task weighting naturally adapts to repository state:
 
-- When unlabelled issues pile up, Task 1 (labelling) dominates.
-- When there are many open issues, Tasks 2 and 3 (commenting and fixing) get more weight.
-- As the backlog clears, Tasks 4–10 (engineering, improvements, nudges, forward progress) draw more evenly.
+- Task 3 gains weight as the open-issue backlog grows.
+- Task 6 gains weight when existing Repo Assist pull requests need maintenance.
+- Tasks 4, 5, 8, 9, and 10 retain baseline weight for engineering, performance, testing, and forward progress.
 
 **Repeat-run mode**: When invoked via `gh aw run repo-assist --repeat`, runs occur every 5–10 minutes. Each run is independent — do not skip a run. Always check memory to avoid duplicate work across runs.
 
