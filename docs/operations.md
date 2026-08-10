@@ -118,8 +118,9 @@ gh issue view 710 --repo ConsumerDataStandardsAustralia/standards-maintenance --
 
 ## Polite usage
 
-- 1 request per second per retailer base URI maximum
-- 12-way parallel ACROSS retailers is fine (each retailer-thread holds its own per-second budget)
+- 1 request per second per base URI maximum
+- 12-way parallelism across distinct base URIs is fine; brands on one shared
+  base URI must use the same serialized per-second budget
 - AER doesn't publish formal rate limits but responds cleanly under that ceiling
 - Add `?updated-since=` for incremental sync to avoid re-fetching unchanged plans
 
