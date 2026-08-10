@@ -171,7 +171,12 @@ def build_parser() -> argparse.ArgumentParser:
     begin.add_argument(
         "--terminal-action",
         required=True,
-        choices=("report-only", "fix-and-push", "full-remediation"),
+        choices=(
+            "report-only",
+            "safe-output-delivery",
+            "fix-and-push",
+            "full-remediation",
+        ),
     )
     begin.add_argument("--deliverable", action="append", required=True)
     begin.set_defaults(handler=cmd_begin)

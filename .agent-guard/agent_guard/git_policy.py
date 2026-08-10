@@ -25,9 +25,12 @@ SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(
         r"(?i)(?:api[_-]?key|secret|password|access[_-]?token|_authToken)"
-        r"\s*[:=]\s*['\"]"
-        r"(?!example\b|placeholder\b|redacted\b|<redacted>|\{|\$)"
-        r"[A-Za-z0-9_./+=-]{8,}['\"]"
+        r"\s*[:=]\s*(?:"
+        r"\"(?!example\b|placeholder\b|redacted\b|<redacted>|\{|\$)"
+        r"(?:\\.|[^\"\r\n]){8,}\""
+        r"|'(?!example\b|placeholder\b|redacted\b|<redacted>|\{|\$)"
+        r"(?:\\.|[^'\r\n]){8,}'"
+        r")"
     ),
     re.compile(
         r"(?i)(?:api[_-]?key|secret|password|access[_-]?token|_authToken)"
@@ -40,7 +43,71 @@ SECRET_PATTERNS = (
         r"(?=[A-Za-z0-9_./+=-]*[0-9+/=_-])"
         r"[A-Za-z0-9_./+=-]{8,}"
     ),
+    re.compile(
+        r"(?:^|\n)(?:API_KEY|SECRET|PASSWORD|ACCESS_TOKEN|AUTH_TOKEN)"
+        r"\s*[:=]\s*"
+        r"(?!EXAMPLE\b|PLACEHOLDER\b|REDACTED\b|[<{\[$])"
+        r"[A-Za-z]{8,}(?=\s*(?:$|[#;,]))"
+    ),
 )
+
+COMMIT_CONTENT_OPTIONS = {
+    "-a",
+    "--all",
+    "-i",
+    "--include",
+    "-o",
+    "--only",
+    "--interactive",
+    "-p",
+    "--patch",
+    "--pathspec-from-file",
+    "--pathspec-file-nul",
+}
+COMMIT_VALUE_OPTIONS = {
+    "-m",
+    "--message",
+    "-F",
+    "--file",
+    "-C",
+    "--reuse-message",
+    "-c",
+    "--reedit-message",
+    "--fixup",
+    "--squash",
+    "--author",
+    "--date",
+    "--cleanup",
+    "--trailer",
+}
+COMMIT_VALUE_PREFIXES = tuple(
+    f"{option}=" for option in COMMIT_VALUE_OPTIONS if option.startswith("--")
+)
+
+
+def commit_selects_worktree_content(arguments: tuple[str, ...]) -> bool:
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        if argument in COMMIT_CONTENT_OPTIONS or argument.startswith(
+            ("--include=", "--only=", "--pathspec-from-file=")
+        ):
+            return True
+        if argument == "--":
+            return index + 1 < len(arguments)
+        if argument in COMMIT_VALUE_OPTIONS:
+            index += 2
+            continue
+        if argument.startswith(COMMIT_VALUE_PREFIXES) or (
+            len(argument) > 2 and argument[:2] in {"-m", "-F", "-C", "-c"}
+        ):
+            index += 1
+            continue
+        if argument.startswith("-"):
+            index += 1
+            continue
+        return True
+    return False
 
 
 def command_output(root: Path, *args: str) -> tuple[int, str, str]:
@@ -257,10 +324,14 @@ def protected_push_failures(
     if require_refspec and not refspecs and delete_index is None:
         failures.append("git push must name an explicit source refspec")
     for argument in refspecs:
-        if argument == ":" or "*" in argument:
+        normalized = argument.lstrip("+")
+        if normalized == ":" or "*" in argument:
             failures.append("push uses a matching or wildcard refspec")
             continue
-        destination = argument.lstrip("+").split(":", 1)[-1]
+        destination = normalized.split(":", 1)[-1]
+        if not destination:
+            failures.append("push uses an empty destination refspec")
+            continue
         if protected_ref(destination):
             failures.append(f"push targets protected remote ref {destination}")
     return list(dict.fromkeys(failures))
@@ -271,9 +342,9 @@ def push_sources(arguments: tuple[str, ...]) -> tuple[str, ...]:
         return ()
     sources: list[str] = []
     for refspec in push_refspecs(arguments):
-        if refspec == ":" or "*" in refspec:
-            continue
         normalized = refspec.lstrip("+")
+        if normalized == ":" or "*" in refspec:
+            continue
         source = normalized.split(":", 1)[0]
         if source:
             sources.append(source)
@@ -353,8 +424,10 @@ def validate_git_action(
         and branch in {"main", "master"}
     ):
         failures.append(f"{action} on protected branch {branch} is not allowed")
-    if contract["terminal_action"] == "report-only":
-        failures.append(f"report-only contract does not authorize {action}")
+    if contract["terminal_action"] in {"report-only", "safe-output-delivery"}:
+        failures.append(
+            f"{contract['terminal_action']} contract does not authorize {action}"
+        )
     if action in mutating_actions:
         preflight = contract.get("preflight")
         if preflight is None:
@@ -374,11 +447,7 @@ def validate_git_action(
                     f"{current_branch or '(detached)'} at {current_head}"
                 )
     if action == "commit":
-        if any(
-            argument in {"-a", "--all", "-i", "--include", "-o", "--only"}
-            or argument.startswith(("--include=", "--only="))
-            for argument in arguments
-        ):
+        if commit_selects_worktree_content(arguments):
             failures.append("commit must not stage files during execution")
         failures.extend(staged_secret_findings(root))
     if action == "push":

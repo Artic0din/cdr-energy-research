@@ -5,8 +5,8 @@ All notable changes to this research repo.
 ## [Unreleased]
 
 ### Changed
-- Repinned Agent Guard and Repo Assist to the reviewed parser and
-  evidence-hardening release.
+- Repinned Agent Guard and Repo Assist to the final reviewed enforcement and
+  safe-output release.
 - Adopted agent-neutral run contracts, cloud-agent hooks, and a pinned
   pull-request policy gate.
 

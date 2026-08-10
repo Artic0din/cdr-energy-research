@@ -17,4 +17,37 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
+      - name: Locate trusted policy action
+        id: policy-action
+        shell: bash
+        run: |
+          if [[ -f .github/actions/pr-policy/action.yml && -f .github/actions/pr-policy/check.py ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check out policy candidate for first rollout
+        if: steps.policy-action.outputs.present != 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: .policy-candidate
+          sparse-checkout: .github/actions/pr-policy
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Bootstrap hash-verified policy action
+        if: steps.policy-action.outputs.present != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate=.policy-candidate/.github/actions/pr-policy
+          (
+            cd "$candidate"
+            printf '%s  %s\n' \
+              'f77ced69c48879bfbeccbd41a22c16379dd1f4b3e7927633a9a291467ea6e6e1' action.yml \
+              '625d6fa3f2742773ef12a8af3aea8727397a8944ff5ee8e98e5d71bed7edb87e' check.py \
+              | sha256sum --check -
+          )
+          mkdir -p .github/actions/pr-policy
+          cp "$candidate/action.yml" "$candidate/check.py" .github/actions/pr-policy/
       - uses: ./.github/actions/pr-policy

@@ -58,6 +58,15 @@ BRANCH_MUTATION_OPTIONS = {
     "--delete",
     "--move",
 }
+CHECKOUT_SWITCH_MUTATION_OPTIONS = {
+    "-b",
+    "-B",
+    "-c",
+    "-C",
+    "--orphan",
+    "--create",
+    "--force-create",
+}
 
 
 @dataclass(frozen=True)
@@ -140,7 +149,11 @@ def command_segments(command: str) -> list[str]:
             current.append(character)
             index += 1
             continue
-        if character == "#" and (index == 0 or command[index - 1].isspace()):
+        if character == "#" and (
+            index == 0
+            or command[index - 1].isspace()
+            or command[index - 1] in ";|&()"
+        ):
             while index < len(command) and command[index] != "\n":
                 index += 1
             continue
@@ -179,13 +192,49 @@ def without_heredoc_bodies(command: str) -> str:
                 pending.pop(0)
             continue
         retained.append(line)
-        pending.extend(
-            (match.group("delimiter"), bool(match.group("tabs")))
-            for match in HEREDOC.finditer(line)
-        )
+        pending.extend(heredoc_markers(line))
     if pending:
         raise ContractError("Unterminated shell heredoc; refusing to fail open")
     return "".join(retained)
+
+
+def heredoc_markers(line: str) -> list[tuple[str, bool]]:
+    markers: list[tuple[str, bool]] = []
+    quote: str | None = None
+    escaped = False
+    index = 0
+    while index < len(line):
+        character = line[index]
+        if escaped:
+            escaped = False
+            index += 1
+            continue
+        if character == "\\" and quote != "'":
+            escaped = True
+            index += 1
+            continue
+        if quote:
+            if character == quote:
+                quote = None
+            index += 1
+            continue
+        if character in {"'", '"'}:
+            quote = character
+            index += 1
+            continue
+        if character == "#" and (
+            index == 0 or line[index - 1].isspace() or line[index - 1] in ";|&()"
+        ):
+            break
+        match = HEREDOC.match(line, index)
+        if match is not None:
+            markers.append(
+                (match.group("delimiter"), bool(match.group("tabs")))
+            )
+            index = match.end()
+            continue
+        index += 1
+    return markers
 
 
 def command_tokens(segment: str) -> list[str]:
@@ -193,6 +242,7 @@ def command_tokens(segment: str) -> list[str]:
         tokens = shlex.split(segment)
     except ValueError as error:
         raise ContractError(f"Unparsable shell command: {error}") from error
+    tokens = unwrap_command_prefix(tokens)
     while tokens and ENVIRONMENT_ASSIGNMENT.fullmatch(tokens[0]):
         tokens.pop(0)
     if tokens and executable_name(tokens[0]) == "env":
@@ -212,11 +262,18 @@ def command_tokens(segment: str) -> list[str]:
             if token.startswith("--unset=") or token in {
                 "-0",
                 "-i",
+                "-v",
+                "--debug",
                 "--ignore-environment",
                 "--null",
             }:
                 tokens.pop(0)
                 continue
+            if token == "--":
+                tokens.pop(0)
+                break
+            if token.startswith("-"):
+                raise ContractError(f"unsupported env option: {token}")
             break
     return tokens
 
@@ -242,6 +299,55 @@ def has_unquoted_redirection(command: str) -> bool:
     return False
 
 
+def has_unquoted_git_subshell(command: str) -> bool:
+    quote: str | None = None
+    escaped = False
+    depth = 0
+    index = 0
+    while index < len(command):
+        character = command[index]
+        if escaped:
+            escaped = False
+            index += 1
+            continue
+        if character == "\\" and quote != "'":
+            escaped = True
+            index += 1
+            continue
+        if quote:
+            if character == quote:
+                quote = None
+            index += 1
+            continue
+        if character in {"'", '"'}:
+            quote = character
+            index += 1
+            continue
+        if character == "#" and (
+            index == 0
+            or command[index - 1].isspace()
+            or command[index - 1] in ";|&()"
+        ):
+            while index < len(command) and command[index] != "\n":
+                index += 1
+            continue
+        if character == "(":
+            depth += 1
+            index += 1
+            continue
+        if character == ")":
+            depth = max(0, depth - 1)
+            index += 1
+            continue
+        if depth and re.match(
+            r"(?:[^\s;&|()]+/)?(?:git|gh|gt)(?=\s|$|[;&|()])",
+            command[index:],
+        ):
+            return True
+        index += 1
+    return False
+
+
 def strip_control_words(tokens: list[str]) -> list[str]:
     remaining = list(tokens)
     while remaining and remaining[0] in SHELL_CONTROL_WORDS:
@@ -251,6 +357,16 @@ def strip_control_words(tokens: list[str]) -> list[str]:
 
 def git_subcommand_action(subcommand: str, arguments: list[str]) -> str | None:
     if subcommand in BRANCH_CHANGE_COMMANDS:
+        if any(
+            argument in CHECKOUT_SWITCH_MUTATION_OPTIONS
+            or argument.startswith(("--orphan=", "--create=", "--force-create="))
+            or (
+                len(argument) > 2
+                and argument[:2] in {"-b", "-B", "-c", "-C"}
+            )
+            for argument in arguments
+        ):
+            return "history-write"
         return "branch-change"
     if subcommand == "branch":
         if any(argument in BRANCH_MUTATION_OPTIONS for argument in arguments):
@@ -277,10 +393,7 @@ def git_subcommand_action(subcommand: str, arguments: list[str]) -> str | None:
             return "history-write"
         return None
     if subcommand == "tag":
-        if not arguments or any(
-            argument in {"--list", "-l", "--contains", "--points-at"}
-            for argument in arguments
-        ):
+        if tag_is_read_only(arguments):
             return None
         return "history-write"
     if subcommand == "clean" and any(
@@ -290,6 +403,66 @@ def git_subcommand_action(subcommand: str, arguments: list[str]) -> str | None:
     if subcommand == "clean":
         return "history-write"
     return GUARDED_GIT_COMMANDS.get(subcommand)
+
+
+def tag_is_read_only(arguments: list[str]) -> bool:
+    if not arguments:
+        return True
+    mutating = {
+        "-a",
+        "--annotate",
+        "-d",
+        "--delete",
+        "-f",
+        "--force",
+        "-s",
+        "--sign",
+        "-u",
+        "--local-user",
+    }
+    if any(argument in mutating for argument in arguments):
+        return False
+    if arguments[0] in {"-v", "--verify"}:
+        return len(arguments) >= 2
+    value_options = {
+        "--contains",
+        "--no-contains",
+        "--merged",
+        "--no-merged",
+        "--points-at",
+        "--sort",
+        "--format",
+        "--color",
+    }
+    value_prefixes = tuple(f"{option}=" for option in value_options)
+    list_mode = False
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        if argument in {"-l", "--list"}:
+            list_mode = True
+            index += 1
+            continue
+        if argument == "-n" or re.fullmatch(r"-n\d+", argument):
+            list_mode = True
+            index += 1
+            continue
+        if argument in value_options:
+            if index + 1 >= len(arguments):
+                return False
+            list_mode = True
+            index += 2
+            continue
+        if argument.startswith(value_prefixes):
+            list_mode = True
+            index += 1
+            continue
+        if argument.startswith("-"):
+            return False
+        if not list_mode:
+            return False
+        index += 1
+    return list_mode
 
 
 def executable_name(token: str) -> str:
@@ -386,6 +559,11 @@ def git_operations(
             "shell command substitutions containing git, gh, or gt are not supported"
         )
     operations: list[DetectedGitAction] = []
+    shell_syntax = without_heredoc_bodies(command)
+    if has_unquoted_git_subshell(shell_syntax):
+        raise ContractError(
+            "shell subshell grouping containing git, gh, or gt is not supported"
+        )
     segments = command_segments(command)
     current_directory = (
         (execution_cwd or root).resolve() if (execution_cwd or root) else None
@@ -523,6 +701,11 @@ def git_operations(
             elif option.startswith("-c") and len(option) > 2:
                 if option[2:].startswith("alias."):
                     alias_override = True
+            elif option.startswith("--config-env"):
+                selection_failure = (
+                    "Git configuration environment overrides are not supported by "
+                    "agent guard"
+                )
             elif option == "--namespace":
                 index += 1
         if index >= len(tokens):
@@ -556,6 +739,17 @@ def git_operations(
             prior_state_change = True
             continue
         action = git_subcommand_action(subcommand, tokens[index + 1 :])
+        if action is None and selection_failure:
+            operations.append(
+                DetectedGitAction(
+                    "history-write",
+                    tuple(tokens[index + 1 :]),
+                    target_root=root,
+                    selection_failure=selection_failure,
+                )
+            )
+            prior_state_change = True
+            continue
         if action is None:
             if root and selected_directory:
                 alias_code = subprocess.run(
@@ -676,6 +870,8 @@ def gh_api_merges(arguments: list[str], cwd: Path | None = None) -> bool:
             value = arguments[index + 1]
             if argument in {"-F", "--field"}:
                 indirect_payloads.append(value)
+            if argument in {"-F", "--field", "-f", "--raw-field"} and not method_is_explicit:
+                method = "POST"
             elif argument == "--input":
                 indirect_payloads.append(f"@{value}")
                 if not method_is_explicit:
@@ -684,6 +880,19 @@ def gh_api_merges(arguments: list[str], cwd: Path | None = None) -> bool:
             continue
         elif argument.startswith("--field="):
             indirect_payloads.append(argument.partition("=")[2])
+            if not method_is_explicit:
+                method = "POST"
+        elif argument.startswith("--raw-field="):
+            if not method_is_explicit:
+                method = "POST"
+        elif (
+            (argument.startswith("-F") or argument.startswith("-f"))
+            and len(argument) > 2
+        ):
+            if argument.startswith("-F"):
+                indirect_payloads.append(argument[2:])
+            if not method_is_explicit:
+                method = "POST"
         elif argument.startswith("--input="):
             indirect_payloads.append(f"@{argument.partition('=')[2]}")
             if not method_is_explicit:
@@ -748,7 +957,8 @@ def pre_tool_failures(payload: dict[str, Any], root: Path) -> list[str]:
             raise
         return [
             "Initialize agent-guard before using tools: .agent-guard/agent-guard begin "
-            "--terminal-action <report-only|fix-and-push|full-remediation> "
+            "--terminal-action "
+            "<report-only|safe-output-delivery|fix-and-push|full-remediation> "
             "--deliverable '<requested outcome>'"
         ]
     failures: list[str] = []

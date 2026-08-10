@@ -24,11 +24,17 @@ else:
 
 
 SCHEMA_VERSION = 1
-TERMINAL_ACTIONS = ("report-only", "fix-and-push", "full-remediation")
+TERMINAL_ACTIONS = (
+    "report-only",
+    "safe-output-delivery",
+    "fix-and-push",
+    "full-remediation",
+)
 DELIVERABLE_STATUSES = ("pending", "completed", "blocked")
 DELEGATE_STATUSES = ("pending", "findings", "no-findings", "blocked")
 REQUIRED_EVIDENCE = {
     "report-only": ("coverage",),
+    "safe-output-delivery": ("validation",),
     "fix-and-push": ("validation", "push"),
     "full-remediation": ("validation", "push", "review-threads", "ci"),
 }
@@ -495,7 +501,10 @@ def completion_failures(contract: dict[str, Any], root: Path) -> list[str]:
             failures.append("report-only run changed the worktree")
         if worktree_digest(root) != contract.get("baseline_worktree_digest"):
             failures.append("report-only run changed repository file contents")
-    elif git_output(root, "status", "--porcelain=v1"):
+    elif (
+        contract["terminal_action"] != "safe-output-delivery"
+        and git_output(root, "status", "--porcelain=v1")
+    ):
         failures.append("mutable run has uncommitted worktree changes")
     preflight = contract.get("preflight")
     if preflight is None:
