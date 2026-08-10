@@ -187,16 +187,18 @@ steps:
       MAX_OPEN_PRS = 4
       MAX_TASKS_PER_RUN = 4
       NUM_TASKS_PER_RUN = min(MAX_TASKS_PER_RUN, max(0, MAX_OPEN_PRS - repo_assist_prs))
-      eligible_task_ids = [3, 4, 5, 6, 8, 9, 10]
+      eligible_task_ids = [3, 4, 5, 8, 9, 10]
       task_ids = [task_id for task_id in task_ids if task_id in eligible_task_ids]
+      weights = {task_id: weights[task_id] for task_id in task_ids}
       task_weights = [weights[task_id] for task_id in task_ids]
       chosen, seen = [], set()
-      for t in rng.choices(task_ids, weights=task_weights, k=30):
-          if t not in seen:
-              seen.add(t)
-              chosen.append(t)
-          if len(chosen) == NUM_TASKS_PER_RUN:
-              break
+      if NUM_TASKS_PER_RUN > 0 and task_ids:
+          for t in rng.choices(task_ids, weights=task_weights, k=30):
+              if t not in seen:
+                  seen.add(t)
+                  chosen.append(t)
+              if len(chosen) >= NUM_TASKS_PER_RUN:
+                  break
 
       print('=== Repo Assist Task Selection ===')
       print(f'Open issues       : {open_issues}')
@@ -266,23 +268,21 @@ Read memory at the **start** of every run; update it at the **end**.
 
 Each run, the deterministic pre-step collects live repo data (open issue count, unlabelled issue count, open Repo Assist PRs, other open PRs), computes a **weighted probability** for each task, and selects up to four tasks using a seeded random draw. The number selected is limited to the remaining slots under the four-open-Repo-Assist-PR cap. The weights and selected tasks are printed in the workflow logs. You will find the selection in `/tmp/gh-aw/task_selection.json`.
 
-**Read the task selection**: at the start of your run, read `/tmp/gh-aw/task_selection.json` and confirm the selected tasks in your opening reasoning. Execute each selected task independently (plus the mandatory Task 11), with exactly one issue and one pull request per implementation task. If a selected task is not applicable to the current repo state, substitute its fallback task rather than doing nothing. If that fallback is also not applicable, mark the slot blocked with the exact reason. Substitutions originating from selected implementation tasks must never switch to Tasks 1, 2, or 7. Record substitutions and blocked slots in the Task 11 run history entry.
+**Read the task selection**: at the start of your run, read `/tmp/gh-aw/task_selection.json` and confirm the selected tasks in your opening reasoning. Execute each selected task independently (plus the mandatory Task 11), with exactly one issue and one pull request per implementation task. If a selected task is not applicable to the current repo state, substitute its fallback task rather than doing nothing. If the fallback is already selected, was already used as a substitution, or is also not applicable, mark the slot blocked with the exact reason instead of executing a duplicate task. Substitutions originating from selected implementation tasks must never switch to Tasks 1, 2, 6, or 7. Record substitutions and blocked slots in the Task 11 run history entry.
 
 | Selected task | Not applicable when… | Fallback |
 |---|---|---|
 | Task 3 (Issue Fix) | No issues labelled `bug`, `help wanted`, or `good first issue` that are fixable | Task 9 |
 | Task 4 (Engineering Investments) | No actionable dependency updates, CI gaps, or build improvements identifiable | Task 5 |
 | Task 5 (Coding Improvements) | No clearly beneficial, low-risk improvements identifiable after reviewing the codebase | Task 9 |
-| Task 6 (Maintain Repo Assist PRs) | No open Repo Assist PRs exist | Task 5 |
 | Task 8 (Performance Improvements) | No measurable performance opportunities identifiable | Task 9 |
 | Task 9 (Testing Improvements) | Test coverage is already comprehensive and no gaps identified | Task 5 |
 | Task 10 (Take Repo Forward) | In-progress work from memory is blocked or complete; no valuable next step | Task 5 |
 
 The implementation-task weighting naturally adapts to repository state:
 
-- Task 3 gains weight as the open-issue backlog grows.
-- Task 6 gains weight when existing Repo Assist pull requests need maintenance.
-- Tasks 4, 5, 8, 9, and 10 retain baseline weight for engineering, performance, testing, and forward progress.
+- Task 3 starts with baseline weight and gains weight as the open-issue backlog grows.
+- Tasks 4, 5, 8, 9, and 10 each start with baseline weight and gain the smaller open-issue adjustment defined by the selector.
 
 **Repeat-run mode**: When invoked via `gh aw run repo-assist --repeat`, runs occur every 5–10 minutes. Each run is independent — do not skip a run. Always check memory to avoid duplicate work across runs.
 
@@ -369,7 +369,7 @@ Improve the quality and coverage of the test suite. Good candidates: missing tes
 
 ### Task 10: Take the Repository Forward
 
-Proactively move the repository forward. Use your judgement to identify the most valuable thing to do  -  investigate a difficult bug, draft a plan or proposal, or chart out future work. Follow the issue-backed implementation gate above before implementing any repository change. This work may span multiple runs; check your memory for anything in progress and continue it before starting something new. Record progress and next steps in memory at the end of each run.
+Proactively identify and implement the most valuable repository improvement that fits one focused issue and pull request. Investigation or planning may support the implementation but does not satisfy this selected task on its own. Follow the issue-backed implementation gate above, and mark the slot blocked if no safe implementation is available. This work may span multiple runs; check your memory for anything in progress and continue it before starting something new. Record progress and next steps in memory at the end of each run.
 
 ### Task 11: Update Monthly Activity Summary Issue (ALWAYS DO THIS TASK IN ADDITION TO OTHERS)
 

@@ -6,8 +6,8 @@ All notable changes to this research repo.
 
 ### Fixed
 
-- Limited Repo Assist selection and fallbacks to implementation tasks and canonical
-  issue-numbered branches.
+- Made Repo Assist zero-capacity selection deterministic and limited scheduled work
+  and fallbacks to distinct issue-backed implementation tasks.
 - Shared PRD endpoints now deduplicate retailers by `cdrBrand`, filter plan
   lists by that brand identity, serialize requests per base URI, and exclude
   stale mixed-brand detail files from catalogue extraction.
