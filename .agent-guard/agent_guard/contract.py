@@ -39,6 +39,7 @@ IGNORED_DIGEST_DIRECTORIES = {
     ".ruff_cache",
     ".tox",
     ".venv",
+    ".wrangler",
     "DerivedData",
     "__pycache__",
     "build",
@@ -92,6 +93,10 @@ def state_path(root: Path) -> Path:
     relative = git_output(root, "rev-parse", "--git-path", "agent-guard/contract.json")
     path = Path(relative)
     return path if path.is_absolute() else root / path
+
+
+def aborted_path(root: Path) -> Path:
+    return state_path(root).with_name("aborted.json")
 
 
 def lock_path(root: Path) -> Path:
@@ -183,25 +188,57 @@ def abort_contract(root: Path, contract: dict[str, Any], reason: str) -> Path:
     contract["aborted_at"] = now_iso()
     contract["abort_reason"] = reason.strip()
     write_contract(root, contract)
-    return archive_contract(root, contract)
+    archive = archive_contract(root, contract)
+    marker = aborted_path(root)
+    marker.write_text(
+        json.dumps(
+            {
+                "run_id": contract["run_id"],
+                "aborted_at": contract["aborted_at"],
+                "reason": contract["abort_reason"],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return archive
 
 
 def worktree_digest(root: Path) -> str:
     digest = hashlib.sha256()
+    update_digest_field(
+        digest,
+        git_output(root, "ls-files", "--stage", "-z").encode("utf-8"),
+    )
+    hashed_paths: set[Path] = set()
     for directory, names, filenames in os.walk(root):
         base = Path(directory)
         retained_names = sorted(
             name for name in names if name not in IGNORED_DIGEST_DIRECTORIES
         )
         for name in retained_names:
-            hash_path_entry(digest, root, base / name)
+            path = base / name
+            hash_path_entry(digest, root, path)
+            hashed_paths.add(path.relative_to(root))
         names[:] = [name for name in retained_names if not (base / name).is_symlink()]
         for filename in sorted(filenames):
-            hash_path_entry(digest, root, base / filename)
+            path = base / filename
+            hash_path_entry(digest, root, path)
+            hashed_paths.add(path.relative_to(root))
+    tracked = git_output(root, "ls-files", "-z")
+    for name in sorted(filter(None, tracked.split("\0"))):
+        relative = Path(name)
+        if relative not in hashed_paths:
+            hash_path_entry(digest, root, root / relative)
     return digest.hexdigest()
 
 
 def hash_path_entry(digest: DigestWriter, root: Path, path: Path) -> None:
+    if not os.path.lexists(path):
+        update_digest_field(digest, path.relative_to(root).as_posix().encode())
+        update_digest_field(digest, b"missing")
+        return
     metadata = path.lstat()
     update_digest_field(digest, path.relative_to(root).as_posix().encode())
     update_digest_field(digest, f"{metadata.st_mode:o}".encode())
@@ -261,8 +298,8 @@ def validate_shape(contract: dict[str, Any]) -> None:
             raise ContractError("Contract preflight must contain a failures list")
         if not isinstance(preflight.get("head"), str) or not preflight["head"]:
             raise ContractError("Contract preflight must contain the checked HEAD")
-        if not isinstance(preflight.get("branch"), str):
-            raise ContractError("Contract preflight must contain the checked branch")
+        if "branch" in preflight and not isinstance(preflight.get("branch"), str):
+            raise ContractError("Contract preflight branch must be text")
         if (
             not isinstance(preflight.get("checked_at"), str)
             or not preflight["checked_at"]
@@ -428,9 +465,24 @@ def completion_failures(contract: dict[str, Any], root: Path) -> list[str]:
     )
     if any_completed:
         evidence_types = {item.get("type") for item in contract["evidence"]}
+        current_head = git_output(root, "rev-parse", "HEAD")
+        current_digest = worktree_digest(root)
         for required in contract["required_evidence"]:
             if required not in evidence_types:
                 failures.append(f"missing required {required} evidence")
+                continue
+            latest = next(
+                item
+                for item in reversed(contract["evidence"])
+                if item.get("type") == required
+            )
+            if (
+                latest.get("head") != current_head
+                or latest.get("worktree_digest") != current_digest
+            ):
+                failures.append(
+                    f"required {required} evidence is stale for current repository contents"
+                )
     if contract["terminal_action"] == "report-only":
         current_head = git_output(root, "rev-parse", "HEAD")
         if current_head != contract["baseline_head"]:

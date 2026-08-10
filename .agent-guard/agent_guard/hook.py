@@ -8,12 +8,15 @@ import json
 from pathlib import Path
 import re
 import shlex
+import subprocess
 import sys
 from typing import Any
 
 from .contract import (
     ContractError,
+    aborted_path,
     complete_and_archive,
+    git_output,
     read_contract,
     repository_root,
     state_path,
@@ -22,15 +25,38 @@ from .git_policy import validate_git_action
 
 
 ENVIRONMENT_ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=.*$", re.DOTALL)
-STATE_CHANGING_GIT_COMMANDS = {"checkout", "reset", "restore", "switch"}
 GUARDED_GIT_COMMANDS = {
+    "add": "history-write",
     "am": "history-write",
     "cherry-pick": "history-write",
     "commit": "commit",
     "merge": "merge",
+    "mv": "history-write",
+    "pull": "history-write",
     "rebase": "history-write",
+    "reset": "history-write",
+    "restore": "history-write",
     "revert": "history-write",
+    "rm": "history-write",
     "push": "push",
+    "update-ref": "history-write",
+}
+BRANCH_CHANGE_COMMANDS = {"checkout", "switch"}
+HEREDOC = re.compile(
+    r"<<(?P<tabs>-)?\s*(?P<quote>['\"]?)(?P<delimiter>[A-Za-z_][A-Za-z0-9_]*)"
+    r"(?P=quote)"
+)
+SHELL_CONTROL_WORDS = {"!", "do", "elif", "else", "if", "then", "until", "while"}
+BRANCH_MUTATION_OPTIONS = {
+    "-c",
+    "-C",
+    "-d",
+    "-D",
+    "-m",
+    "-M",
+    "--copy",
+    "--delete",
+    "--move",
 }
 
 
@@ -54,9 +80,18 @@ def load_payload() -> dict[str, Any]:
 
 
 def hook_root(payload: dict[str, Any]) -> Path:
-    candidates = [payload.get("cwd"), *(payload.get("workspace_roots") or [])]
-    for candidate in candidates:
+    workspace_roots = payload.get("workspace_roots") or []
+    if not isinstance(workspace_roots, list):
+        raise ContractError("Hook workspace_roots must be a list")
+    payload_cwd = payload.get("cwd")
+    if payload_cwd:
+        if not isinstance(payload_cwd, str):
+            raise ContractError("Hook repository paths must be text")
+        return repository_root(Path(payload_cwd))
+    for candidate in workspace_roots:
         if candidate:
+            if not isinstance(candidate, str):
+                raise ContractError("Hook repository paths must be text")
             try:
                 return repository_root(Path(candidate))
             except ContractError:
@@ -76,6 +111,7 @@ def shell_command(payload: dict[str, Any]) -> str:
 
 
 def command_segments(command: str) -> list[str]:
+    command = without_heredoc_bodies(command)
     segments: list[str] = []
     current: list[str] = []
     quote: str | None = None
@@ -104,6 +140,10 @@ def command_segments(command: str) -> list[str]:
             current.append(character)
             index += 1
             continue
+        if character == "#" and (index == 0 or command[index - 1].isspace()):
+            while index < len(command) and command[index] != "\n":
+                index += 1
+            continue
         boundary_length = 0
         if command[index : index + 2] in {"&&", "||"}:
             boundary_length = 2
@@ -126,6 +166,28 @@ def command_segments(command: str) -> list[str]:
     return segments
 
 
+def without_heredoc_bodies(command: str) -> str:
+    retained: list[str] = []
+    pending: list[tuple[str, bool]] = []
+    for line in command.splitlines(keepends=True):
+        if pending:
+            delimiter, strip_tabs = pending[0]
+            candidate = line.rstrip("\r\n")
+            if strip_tabs:
+                candidate = candidate.lstrip("\t")
+            if candidate == delimiter:
+                pending.pop(0)
+            continue
+        retained.append(line)
+        pending.extend(
+            (match.group("delimiter"), bool(match.group("tabs")))
+            for match in HEREDOC.finditer(line)
+        )
+    if pending:
+        raise ContractError("Unterminated shell heredoc; refusing to fail open")
+    return "".join(retained)
+
+
 def command_tokens(segment: str) -> list[str]:
     try:
         tokens = shlex.split(segment)
@@ -133,13 +195,101 @@ def command_tokens(segment: str) -> list[str]:
         raise ContractError(f"Unparsable shell command: {error}") from error
     while tokens and ENVIRONMENT_ASSIGNMENT.fullmatch(tokens[0]):
         tokens.pop(0)
-    if tokens and tokens[0] in {"env", "/usr/bin/env"}:
+    if tokens and executable_name(tokens[0]) == "env":
         tokens.pop(0)
-        while tokens and (
-            tokens[0].startswith("-") or ENVIRONMENT_ASSIGNMENT.fullmatch(tokens[0])
-        ):
-            tokens.pop(0)
+        while tokens:
+            token = tokens[0]
+            if ENVIRONMENT_ASSIGNMENT.fullmatch(token):
+                tokens.pop(0)
+                continue
+            if token in {"-C", "--chdir"} or token.startswith("--chdir="):
+                raise ContractError("env directory changes are not supported")
+            if token in {"-u", "--unset"}:
+                if len(tokens) < 2:
+                    raise ContractError(f"env option {token} is missing its value")
+                del tokens[:2]
+                continue
+            if token.startswith("--unset=") or token in {
+                "-0",
+                "-i",
+                "--ignore-environment",
+                "--null",
+            }:
+                tokens.pop(0)
+                continue
+            break
     return tokens
+
+
+def has_unquoted_redirection(command: str) -> bool:
+    quote: str | None = None
+    escaped = False
+    for character in command:
+        if escaped:
+            escaped = False
+            continue
+        if character == "\\" and quote != "'":
+            escaped = True
+            continue
+        if quote:
+            if character == quote:
+                quote = None
+            continue
+        if character in {"'", '"'}:
+            quote = character
+        elif character in {"<", ">"}:
+            return True
+    return False
+
+
+def strip_control_words(tokens: list[str]) -> list[str]:
+    remaining = list(tokens)
+    while remaining and remaining[0] in SHELL_CONTROL_WORDS:
+        remaining.pop(0)
+    return remaining
+
+
+def git_subcommand_action(subcommand: str, arguments: list[str]) -> str | None:
+    if subcommand in BRANCH_CHANGE_COMMANDS:
+        return "branch-change"
+    if subcommand == "branch":
+        if any(argument in BRANCH_MUTATION_OPTIONS for argument in arguments):
+            return "history-write"
+        if arguments and not any(
+            argument
+            in {
+                "--all",
+                "--contains",
+                "--list",
+                "--merged",
+                "--no-merged",
+                "--remotes",
+                "--show-current",
+                "--verbose",
+                "-a",
+                "-l",
+                "-r",
+                "-v",
+                "-vv",
+            }
+            for argument in arguments
+        ):
+            return "history-write"
+        return None
+    if subcommand == "tag":
+        if not arguments or any(
+            argument in {"--list", "-l", "--contains", "--points-at"}
+            for argument in arguments
+        ):
+            return None
+        return "history-write"
+    if subcommand == "clean" and any(
+        argument in {"-n", "--dry-run"} for argument in arguments
+    ):
+        return None
+    if subcommand == "clean":
+        return "history-write"
+    return GUARDED_GIT_COMMANDS.get(subcommand)
 
 
 def executable_name(token: str) -> str:
@@ -181,23 +331,44 @@ def unwrap_command_prefix(tokens: list[str]) -> list[str]:
     return remaining
 
 
-def is_bootstrap_command(command: str) -> bool:
+def is_bootstrap_command(command: str, root: Path | None = None) -> bool:
+    return is_guard_command(command, "begin", root)
+
+
+def is_preflight_command(command: str, root: Path | None = None) -> bool:
+    return is_guard_command(command, "preflight", root)
+
+
+def is_guard_command(command: str, subcommand: str, root: Path | None = None) -> bool:
     segments = command_segments(command)
-    if len(segments) != 1 or "$(" in command or "`" in command:
+    if (
+        len(segments) != 1
+        or "$(" in command
+        or "`" in command
+        or has_unquoted_redirection(command)
+    ):
         return False
     tokens = unwrap_command_prefix(command_tokens(segments[0]))
     return (
         len(tokens) >= 4
         and executable_name(tokens[0]) in {"python", "python3"}
-        and tokens[1:4] == ["-m", "agent_guard", "begin"]
-    ) or (len(tokens) >= 2 and pinned_launcher(tokens[0]) and tokens[1] == "begin")
-
-
-def pinned_launcher(token: str) -> bool:
-    normalized = token.replace("\\", "/")
-    return normalized == ".agent-guard/agent-guard" or normalized.endswith(
-        "/.agent-guard/agent-guard"
+        and tokens[1:4] == ["-m", "agent_guard", subcommand]
+    ) or (
+        len(tokens) >= 2
+        and pinned_launcher(tokens[0], root)
+        and tokens[1] == subcommand
     )
+
+
+def pinned_launcher(token: str, root: Path | None = None) -> bool:
+    normalized = token.replace("\\", "/")
+    if root is None:
+        return normalized == ".agent-guard/agent-guard"
+    candidate = Path(token)
+    resolved = (
+        candidate.resolve() if candidate.is_absolute() else (root / candidate).resolve()
+    )
+    return resolved == (root / ".agent-guard" / "agent-guard").resolve()
 
 
 def git_operations(
@@ -208,6 +379,12 @@ def git_operations(
 ) -> list[DetectedGitAction]:
     if recursion_depth > 4:
         raise ContractError("Nested shell command depth exceeds agent-guard limit")
+    if ("$(" in command or "`" in command) and re.search(
+        r"(?:^|[^A-Za-z0-9_-])(?:git|gh|gt)(?:\s|$)", command
+    ):
+        raise ContractError(
+            "shell command substitutions containing git, gh, or gt are not supported"
+        )
     operations: list[DetectedGitAction] = []
     segments = command_segments(command)
     current_directory = (
@@ -216,7 +393,7 @@ def git_operations(
     prior_state_change = False
     prior_guarded_mutation = False
     for segment in segments:
-        tokens = unwrap_command_prefix(command_tokens(segment))
+        tokens = strip_control_words(unwrap_command_prefix(command_tokens(segment)))
         if not tokens:
             continue
         if executable_name(tokens[0]) == "cd":
@@ -235,7 +412,9 @@ def git_operations(
                 (
                     index + 1
                     for index, token in enumerate(tokens[:-1])
-                    if token.startswith("-") and "c" in token[1:]
+                    if token.startswith("-")
+                    and not token.startswith("--")
+                    and "c" in token[1:]
                 ),
                 None,
             )
@@ -272,7 +451,7 @@ def git_operations(
         if (
             gh_index is not None
             and tokens[gh_index] == "api"
-            and gh_api_merges(tokens[gh_index + 1 :])
+            and gh_api_merges(tokens[gh_index + 1 :], current_directory)
         ):
             operations.append(
                 DetectedGitAction(
@@ -289,11 +468,19 @@ def git_operations(
             and executable_name(tokens[0]) == "gt"
             and tokens[1] in {"merge", "submit"}
         ):
+            target_root = root
+            target_failure = None
+            if current_directory:
+                try:
+                    target_root = repository_root(current_directory)
+                except ContractError as error:
+                    target_failure = str(error)
             operations.append(
                 DetectedGitAction(
                     "pr-merge" if tokens[1] == "merge" else "push",
                     tuple(tokens[2:]),
-                    target_root=root,
+                    target_root=target_root,
+                    selection_failure=target_failure,
                     source="gt",
                 )
             )
@@ -304,6 +491,7 @@ def git_operations(
         index = 1
         selected_directory = current_directory or root
         selection_failure = None
+        alias_override = False
         while index < len(tokens) and tokens[index].startswith("-"):
             option = tokens[index]
             index += 1
@@ -328,27 +516,66 @@ def git_operations(
                 )
                 if "=" not in option:
                     index += 1
-            elif option in {"-c", "--namespace"}:
+            elif option == "-c":
+                if index < len(tokens) and tokens[index].startswith("alias."):
+                    alias_override = True
+                index += 1
+            elif option.startswith("-c") and len(option) > 2:
+                if option[2:].startswith("alias."):
+                    alias_override = True
+            elif option == "--namespace":
                 index += 1
         if index >= len(tokens):
             continue
         subcommand = tokens[index]
-        if subcommand == "reset" and "--hard" in tokens[index + 1 :]:
+        if alias_override:
             operations.append(
                 DetectedGitAction(
                     "history-write",
                     tuple(tokens[index + 1 :]),
                     target_root=root,
-                    selection_failure="git reset --hard is not authorized",
+                    selection_failure="Git aliases are not supported by agent guard",
                 )
             )
             prior_state_change = True
             continue
-        if subcommand in STATE_CHANGING_GIT_COMMANDS:
+        if subcommand == "reset":
+            reset_failure = (
+                "git reset --hard is not authorized"
+                if "--hard" in tokens[index + 1 :]
+                else "git reset is not authorized; use git restore"
+            )
+            operations.append(
+                DetectedGitAction(
+                    "history-write",
+                    tuple(tokens[index + 1 :]),
+                    target_root=root,
+                    selection_failure=reset_failure,
+                )
+            )
             prior_state_change = True
             continue
-        action = GUARDED_GIT_COMMANDS.get(subcommand)
+        action = git_subcommand_action(subcommand, tokens[index + 1 :])
         if action is None:
+            if root and selected_directory:
+                alias_code = subprocess.run(
+                    ["git", "config", "--get", f"alias.{subcommand}"],
+                    cwd=selected_directory,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                ).returncode
+                if alias_code == 0:
+                    operations.append(
+                        DetectedGitAction(
+                            "history-write",
+                            tuple(tokens[index + 1 :]),
+                            target_root=root,
+                            selection_failure=(
+                                "Git aliases are not supported by agent guard"
+                            ),
+                        )
+                    )
             continue
         if prior_state_change or prior_guarded_mutation:
             selection_failure = (
@@ -370,6 +597,8 @@ def git_operations(
                 source="git",
             )
         )
+        if action in {"branch-change", "history-write"}:
+            prior_state_change = True
         prior_guarded_mutation = True
     return operations
 
@@ -409,27 +638,86 @@ def gh_subcommand_index(tokens: list[str]) -> int | None:
     return None
 
 
-def gh_api_merges(arguments: list[str]) -> bool:
+def gh_api_merges(arguments: list[str], cwd: Path | None = None) -> bool:
     if any("mergePullRequest" in argument for argument in arguments):
         return True
     method = "GET"
+    method_is_explicit = False
     endpoint = ""
+    indirect_payloads: list[str] = []
+    value_options = {
+        "-F",
+        "--field",
+        "-f",
+        "--raw-field",
+        "-H",
+        "--header",
+        "--hostname",
+        "--input",
+        "--cache",
+    }
     index = 0
     while index < len(arguments):
         argument = arguments[index]
         if argument in {"-X", "--method"} and index + 1 < len(arguments):
             method = arguments[index + 1].upper()
+            method_is_explicit = True
             index += 2
             continue
-        if argument.startswith("--method="):
+        if argument.startswith("-X") and len(argument) > 2:
+            method = argument[2:].upper()
+            method_is_explicit = True
+        elif argument.startswith("--method="):
             method = argument.partition("=")[2].upper()
+            method_is_explicit = True
+        elif argument in value_options:
+            if index + 1 >= len(arguments):
+                raise ContractError(f"gh api option {argument} is missing its value")
+            value = arguments[index + 1]
+            if argument in {"-F", "--field"}:
+                indirect_payloads.append(value)
+            elif argument == "--input":
+                indirect_payloads.append(f"@{value}")
+                if not method_is_explicit:
+                    method = "POST"
+            index += 2
+            continue
+        elif argument.startswith("--field="):
+            indirect_payloads.append(argument.partition("=")[2])
+        elif argument.startswith("--input="):
+            indirect_payloads.append(f"@{argument.partition('=')[2]}")
+            if not method_is_explicit:
+                method = "POST"
         elif not argument.startswith("-") and not endpoint:
             endpoint = argument
         index += 1
+    if endpoint == "graphql" and graphql_payload_merges(indirect_payloads, cwd):
+        return True
     return (
         method in {"POST", "PUT"}
         and re.search(r"(?:^|/)pulls/\d+/merge(?:$|\?)", endpoint) is not None
     )
+
+
+def graphql_payload_merges(values: list[str], cwd: Path | None) -> bool:
+    for value in values:
+        candidate = value.partition("=")[2] if "=" in value else value
+        if not candidate.startswith("@"):
+            continue
+        filename = candidate[1:]
+        if not filename or filename == "-":
+            return True
+        path = Path(filename)
+        path = path if path.is_absolute() else (cwd or Path.cwd()) / path
+        try:
+            content = path.read_text(encoding="utf-8")
+        except OSError as error:
+            raise ContractError(
+                f"Unable to inspect gh api payload {path}: {error}"
+            ) from error
+        if "mergePullRequest" in content:
+            return True
+    return False
 
 
 def selected_git_directory(current: Path | None, value: str) -> Path | None:
@@ -449,7 +737,9 @@ def git_actions(command: str) -> list[str]:
 
 def pre_tool_failures(payload: dict[str, Any], root: Path) -> list[str]:
     command = shell_command(payload)
-    if command and is_bootstrap_command(command):
+    if command and (
+        is_bootstrap_command(command, root) or is_preflight_command(command, root)
+    ):
         return []
     try:
         contract = read_contract(root)
@@ -462,7 +752,28 @@ def pre_tool_failures(payload: dict[str, Any], root: Path) -> list[str]:
             "--deliverable '<requested outcome>'"
         ]
     failures: list[str] = []
-    payload_cwd = Path(payload.get("cwd") or root).resolve()
+    preflight = contract.get("preflight")
+    if preflight is None:
+        failures.append("Run agent-guard preflight before using repository tools")
+    else:
+        failures.extend(
+            f"agent-guard preflight failed: {failure}"
+            for failure in preflight.get("failures", [])
+        )
+        current_head = git_output(root, "rev-parse", "HEAD")
+        current_branch = git_output(root, "branch", "--show-current")
+        if (
+            preflight.get("head") != current_head
+            or preflight.get("branch") != current_branch
+        ):
+            failures.append(
+                "agent-guard preflight is stale for current checkout "
+                f"{current_branch or '(detached)'} at {current_head}"
+            )
+    payload_cwd_value = payload.get("cwd")
+    if payload_cwd_value is not None and not isinstance(payload_cwd_value, str):
+        raise ContractError("hook payload cwd must be text")
+    payload_cwd = Path(payload_cwd_value or root).resolve()
     for operation in git_operations(command, root, payload_cwd):
         if operation.selection_failure:
             failures.append(operation.selection_failure)
@@ -487,6 +798,8 @@ def pre_tool_failures(payload: dict[str, Any], root: Path) -> list[str]:
 
 def stop_failures(root: Path) -> list[str]:
     if not state_path(root).exists():
+        if aborted_path(root).is_file():
+            return ["aborted run has no successor contract"]
         return []
     failures, _ = complete_and_archive(root)
     return failures
@@ -522,11 +835,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         payload = load_payload()
-        try:
-            root = hook_root(payload)
-        except ContractError:
-            print(json.dumps(render(args.host, args.event, [])))
-            return 0
+        root = hook_root(payload)
         failures = (
             stop_failures(root)
             if args.event == "stop"

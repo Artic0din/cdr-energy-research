@@ -10,6 +10,7 @@ from typing import Callable
 
 from .contract import (
     ContractError,
+    aborted_path,
     abort_contract,
     add_delegate,
     complete_and_archive,
@@ -45,6 +46,7 @@ def cmd_begin(args: argparse.Namespace) -> int:
             )
         contract = create_contract(root, args.terminal_action, args.deliverable)
         write_contract(root, contract)
+        aborted_path(root).unlink(missing_ok=True)
     print(json.dumps(contract, indent=2))
     return 0
 

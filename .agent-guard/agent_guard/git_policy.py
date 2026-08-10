@@ -25,8 +25,19 @@ SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(
         r"(?i)(?:api[_-]?key|secret|password|access[_-]?token|_authToken)"
-        r"\s*[:=]\s*['\"]?"
+        r"\s*[:=]\s*['\"]"
         r"(?!example\b|placeholder\b|redacted\b|<redacted>|\{|\$)"
+        r"[A-Za-z0-9_./+=-]{8,}['\"]"
+    ),
+    re.compile(
+        r"(?i)(?:api[_-]?key|secret|password|access[_-]?token|_authToken)"
+        r"\s*[:=]\s*"
+        r"(?!example\b|placeholder\b|redacted\b|<redacted>|\{|\$)"
+        r"(?![A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+"
+        r"\s*(?:\r?\n|$|[#;,]))"
+        r"(?!(?-i:[A-Z][A-Z0-9_]{7,})\s*(?:\r?\n|$|[#;,]))"
+        r"(?=[A-Za-z0-9_./+=-]{8,}(?:\s|$))"
+        r"(?=[A-Za-z0-9_./+=-]*[0-9+/=_-])"
         r"[A-Za-z0-9_./+=-]{8,}"
     ),
 )
@@ -84,6 +95,7 @@ def secret_findings(
             "--name-only",
             "--diff-filter=ACMRTUXB",
             "--root",
+            "-m",
             "-r",
             commit,
         ).splitlines()
@@ -162,15 +174,22 @@ def validate_preflight(
                 )
     virtual_environment = os.environ.get("VIRTUAL_ENV")
     if expected_environment and not virtual_environment:
-        failures.append(
-            f"VIRTUAL_ENV is not active; expected {expected_environment.resolve()}"
+        expected_path = (
+            expected_environment.resolve()
+            if expected_environment.is_absolute()
+            else (root / expected_environment).resolve()
         )
+        failures.append(f"VIRTUAL_ENV is not active; expected {expected_path}")
     elif virtual_environment:
         environment_path = Path(virtual_environment).resolve()
         if not environment_path.exists():
             failures.append(f"VIRTUAL_ENV does not exist: {virtual_environment}")
         elif expected_environment:
-            expected_path = expected_environment.resolve()
+            expected_path = (
+                expected_environment.resolve()
+                if expected_environment.is_absolute()
+                else (root / expected_environment).resolve()
+            )
             if environment_path != expected_path:
                 failures.append(
                     "VIRTUAL_ENV mismatch: expected "
@@ -238,6 +257,9 @@ def protected_push_failures(
     if require_refspec and not refspecs and delete_index is None:
         failures.append("git push must name an explicit source refspec")
     for argument in refspecs:
+        if argument == ":" or "*" in argument:
+            failures.append("push uses a matching or wildcard refspec")
+            continue
         destination = argument.lstrip("+").split(":", 1)[-1]
         if protected_ref(destination):
             failures.append(f"push targets protected remote ref {destination}")
@@ -249,6 +271,8 @@ def push_sources(arguments: tuple[str, ...]) -> tuple[str, ...]:
         return ()
     sources: list[str] = []
     for refspec in push_refspecs(arguments):
+        if refspec == ":" or "*" in refspec:
+            continue
         normalized = refspec.lstrip("+")
         source = normalized.split(":", 1)[0]
         if source:
@@ -257,11 +281,27 @@ def push_sources(arguments: tuple[str, ...]) -> tuple[str, ...]:
 
 
 def push_refspecs(arguments: tuple[str, ...]) -> list[str]:
-    options_with_values = {"--exec", "--push-option", "--receive-pack", "--repo", "-o"}
+    options_with_values = {
+        "--exec",
+        "--push-option",
+        "--receive-pack",
+        "--recurse-submodules",
+        "--repo",
+        "-o",
+    }
     positionals: list[str] = []
     skip_next = False
+    skip_redirection_target = False
     repository_from_option = False
     for argument in arguments:
+        if skip_redirection_target:
+            skip_redirection_target = False
+            continue
+        if re.fullmatch(r"\d*(?:<|>|>>)", argument):
+            skip_redirection_target = True
+            continue
+        if re.match(r"^\d*(?:<|>|>>).+", argument):
+            continue
         if skip_next:
             skip_next = False
             continue
@@ -273,12 +313,15 @@ def push_refspecs(arguments: tuple[str, ...]) -> list[str]:
         if argument.startswith("--repo="):
             repository_from_option = True
             continue
+        if argument.startswith("--recurse-submodules="):
+            continue
         if argument.startswith("-"):
             continue
         positionals.append(argument)
-    if repository_from_option:
-        return positionals
-    return positionals[1:] if positionals else []
+    refspecs = positionals if repository_from_option else positionals[1:]
+    if refspecs[:1] == ["tag"]:
+        return refspecs[1:]
+    return refspecs
 
 
 def protected_ref(reference: str) -> bool:
@@ -297,8 +340,18 @@ def validate_git_action(
     branch = git_output(root, "branch", "--show-current")
     if action == "pr-merge":
         return ["agents are not authorized to merge pull requests"]
-    mutating_actions = {"commit", "history-write", "merge", "push"}
-    if action in mutating_actions and branch in {"main", "master"}:
+    mutating_actions = {
+        "branch-change",
+        "commit",
+        "history-write",
+        "merge",
+        "push",
+    }
+    if (
+        action in mutating_actions
+        and action != "branch-change"
+        and branch in {"main", "master"}
+    ):
         failures.append(f"{action} on protected branch {branch} is not allowed")
     if contract["terminal_action"] == "report-only":
         failures.append(f"report-only contract does not authorize {action}")
@@ -321,6 +374,12 @@ def validate_git_action(
                     f"{current_branch or '(detached)'} at {current_head}"
                 )
     if action == "commit":
+        if any(
+            argument in {"-a", "--all", "-i", "--include", "-o", "--only"}
+            or argument.startswith(("--include=", "--only="))
+            for argument in arguments
+        ):
+            failures.append("commit must not stage files during execution")
         failures.extend(staged_secret_findings(root))
     if action == "push":
         failures.extend(

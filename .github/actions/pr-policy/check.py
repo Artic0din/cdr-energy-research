@@ -15,7 +15,12 @@ CONVENTIONAL_TITLE = re.compile(
     r"^(?:feat|fix|test|refactor|perf|docs|style|chore|ci|build|revert)"
     r"(?:\([a-z0-9][a-z0-9._/-]*\))?: .+"
 )
-ISSUE_BRANCH = re.compile(r"(?:^|/)(\d+)-[a-z0-9]", re.IGNORECASE)
+ISSUE_BRANCH = re.compile(
+    r"^(?:(?:feat|fix|test|refactor|perf|cursor)/"
+    r"|repo-assist/(?:issue-)?)"
+    r"(\d+)(?:-|$)",
+    re.IGNORECASE,
+)
 ISSUE_LINK = re.compile(r"(?im)^\s*(?:[-*+]\s*)?(?:fixes|closes|resolves)\s+#(\d+)\b")
 VALIDATION_SECTION = re.compile(
     r"(?ims)^#{1,3}\s+(?:test plan|tests?|validation|verification)\s*$"
@@ -23,7 +28,7 @@ VALIDATION_SECTION = re.compile(
 )
 NEGATIVE_VALIDATION = re.compile(
     r"(?i)^(?:n/?a|none|not applicable|not required|not run|not tested|pending|"
-    r"skipped|todo)(?:[.!])?$"
+    r"skipped|todo)(?:\b|[.!])"
 )
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
@@ -31,7 +36,7 @@ HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 def validate_pull_request(pull_request: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     title = str(pull_request.get("title") or "")
-    body = str(pull_request.get("body") or "")
+    body = HTML_COMMENT.sub("", str(pull_request.get("body") or ""))
     branch = str(pull_request.get("head", {}).get("ref") or "")
     if pull_request.get("draft"):
         failures.append("pull request must be ready for review, not draft")
@@ -54,13 +59,16 @@ def validate_pull_request(pull_request: dict[str, Any]) -> list[str]:
 
 
 def meaningful_validation(content: str) -> bool:
-    for line in HTML_COMMENT.sub("", content).splitlines():
+    for line in content.splitlines():
         stripped = line.strip().lstrip("-* ").strip()
-        if not stripped or re.match(r"^\[\s\]", stripped):
+        if re.match(r"^\[\s\]", stripped):
+            continue
+        stripped = re.sub(r"^\[[ xX]\]\s*", "", stripped)
+        if not stripped:
             continue
         if ISSUE_LINK.fullmatch(stripped):
             continue
-        if NEGATIVE_VALIDATION.fullmatch(stripped):
+        if NEGATIVE_VALIDATION.match(stripped):
             continue
         return True
     return False
