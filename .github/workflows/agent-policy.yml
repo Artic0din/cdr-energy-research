@@ -45,7 +45,7 @@ jobs:
             cd "$candidate"
             printf '%s  %s\n' \
               'f77ced69c48879bfbeccbd41a22c16379dd1f4b3e7927633a9a291467ea6e6e1' action.yml \
-              '625d6fa3f2742773ef12a8af3aea8727397a8944ff5ee8e98e5d71bed7edb87e' check.py \
+              'cc8a24d749f74cccb675dafaacd3e70b5cb8f7bffe49288c7c1d95bbec9b05f6' check.py \
               | sha256sum --check -
           )
           mkdir -p .github/actions/pr-policy

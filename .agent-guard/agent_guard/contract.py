@@ -217,26 +217,26 @@ def worktree_digest(root: Path) -> str:
         digest,
         git_output(root, "ls-files", "--stage", "-z").encode("utf-8"),
     )
-    hashed_paths: set[Path] = set()
-    for directory, names, filenames in os.walk(root):
-        base = Path(directory)
-        retained_names = sorted(
-            name for name in names if name not in IGNORED_DIGEST_DIRECTORIES
+    tracked = set(filter(None, git_output(root, "ls-files", "-z").split("\0")))
+    untracked = set(
+        filter(
+            None,
+            git_output(
+                root,
+                "ls-files",
+                "--others",
+                "--exclude-standard",
+                "-z",
+            ).split("\0"),
         )
-        for name in retained_names:
-            path = base / name
-            hash_path_entry(digest, root, path)
-            hashed_paths.add(path.relative_to(root))
-        names[:] = [name for name in retained_names if not (base / name).is_symlink()]
-        for filename in sorted(filenames):
-            path = base / filename
-            hash_path_entry(digest, root, path)
-            hashed_paths.add(path.relative_to(root))
-    tracked = git_output(root, "ls-files", "-z")
-    for name in sorted(filter(None, tracked.split("\0"))):
+    )
+    for name in sorted(tracked):
+        hash_path_entry(digest, root, root / name)
+    for name in sorted(untracked):
         relative = Path(name)
-        if relative not in hashed_paths:
-            hash_path_entry(digest, root, root / relative)
+        if any(part in IGNORED_DIGEST_DIRECTORIES for part in relative.parts):
+            continue
+        hash_path_entry(digest, root, root / relative)
     return digest.hexdigest()
 
 
@@ -501,9 +501,8 @@ def completion_failures(contract: dict[str, Any], root: Path) -> list[str]:
             failures.append("report-only run changed the worktree")
         if worktree_digest(root) != contract.get("baseline_worktree_digest"):
             failures.append("report-only run changed repository file contents")
-    elif (
-        contract["terminal_action"] != "safe-output-delivery"
-        and git_output(root, "status", "--porcelain=v1")
+    elif contract["terminal_action"] != "safe-output-delivery" and git_output(
+        root, "status", "--porcelain=v1"
     ):
         failures.append("mutable run has uncommitted worktree changes")
     preflight = contract.get("preflight")

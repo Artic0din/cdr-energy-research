@@ -39,6 +39,7 @@ GUARDED_GIT_COMMANDS = {
     "revert": "history-write",
     "rm": "history-write",
     "push": "push",
+    "send-pack": "push",
     "update-ref": "history-write",
 }
 BRANCH_CHANGE_COMMANDS = {"checkout", "switch"}
@@ -46,7 +47,18 @@ HEREDOC = re.compile(
     r"<<(?P<tabs>-)?\s*(?P<quote>['\"]?)(?P<delimiter>[A-Za-z_][A-Za-z0-9_]*)"
     r"(?P=quote)"
 )
-SHELL_CONTROL_WORDS = {"!", "do", "elif", "else", "if", "then", "until", "while"}
+SHELL_CONTROL_WORDS = {
+    "!",
+    "{",
+    "}",
+    "do",
+    "elif",
+    "else",
+    "if",
+    "then",
+    "until",
+    "while",
+}
 BRANCH_MUTATION_OPTIONS = {
     "-c",
     "-C",
@@ -66,6 +78,35 @@ CHECKOUT_SWITCH_MUTATION_OPTIONS = {
     "--orphan",
     "--create",
     "--force-create",
+}
+GH_APPROVED_TOP_LEVEL_COMMANDS = {
+    "alias",
+    "api",
+    "auth",
+    "aw",
+    "browse",
+    "cache",
+    "codespace",
+    "completion",
+    "config",
+    "extension",
+    "gist",
+    "gpg-key",
+    "issue",
+    "label",
+    "org",
+    "pr",
+    "project",
+    "release",
+    "repo",
+    "ruleset",
+    "run",
+    "search",
+    "secret",
+    "ssh-key",
+    "status",
+    "variable",
+    "workflow",
 }
 
 
@@ -150,9 +191,7 @@ def command_segments(command: str) -> list[str]:
             index += 1
             continue
         if character == "#" and (
-            index == 0
-            or command[index - 1].isspace()
-            or command[index - 1] in ";|&()"
+            index == 0 or command[index - 1].isspace() or command[index - 1] in ";|&()"
         ):
             while index < len(command) and command[index] != "\n":
                 index += 1
@@ -160,7 +199,11 @@ def command_segments(command: str) -> list[str]:
         boundary_length = 0
         if command[index : index + 2] in {"&&", "||"}:
             boundary_length = 2
-        elif character in {";", "|", "\n"}:
+        elif character in {";", "|", "\n"} or (
+            character == "&"
+            and command[index - 1 : index] != ">"
+            and command[index + 1 : index + 2] != ">"
+        ):
             boundary_length = 1
         if boundary_length:
             segment = "".join(current).strip()
@@ -228,9 +271,7 @@ def heredoc_markers(line: str) -> list[tuple[str, bool]]:
             break
         match = HEREDOC.match(line, index)
         if match is not None:
-            markers.append(
-                (match.group("delimiter"), bool(match.group("tabs")))
-            )
+            markers.append((match.group("delimiter"), bool(match.group("tabs"))))
             index = match.end()
             continue
         index += 1
@@ -324,9 +365,7 @@ def has_unquoted_git_subshell(command: str) -> bool:
             index += 1
             continue
         if character == "#" and (
-            index == 0
-            or command[index - 1].isspace()
-            or command[index - 1] in ";|&()"
+            index == 0 or command[index - 1].isspace() or command[index - 1] in ";|&()"
         ):
             while index < len(command) and command[index] != "\n":
                 index += 1
@@ -356,14 +395,19 @@ def strip_control_words(tokens: list[str]) -> list[str]:
 
 
 def git_subcommand_action(subcommand: str, arguments: list[str]) -> str | None:
+    if subcommand == "add" and any(
+        argument in {"-n", "--dry-run"} for argument in arguments
+    ):
+        return None
+    if subcommand == "config":
+        return None if config_is_read_only(arguments) else "history-write"
+    if subcommand == "stash":
+        return None if arguments[:1] in (["list"], ["show"]) else "history-write"
     if subcommand in BRANCH_CHANGE_COMMANDS:
         if any(
             argument in CHECKOUT_SWITCH_MUTATION_OPTIONS
             or argument.startswith(("--orphan=", "--create=", "--force-create="))
-            or (
-                len(argument) > 2
-                and argument[:2] in {"-b", "-B", "-c", "-C"}
-            )
+            or (len(argument) > 2 and argument[:2] in {"-b", "-B", "-c", "-C"})
             for argument in arguments
         ):
             return "history-write"
@@ -403,6 +447,75 @@ def git_subcommand_action(subcommand: str, arguments: list[str]) -> str | None:
     if subcommand == "clean":
         return "history-write"
     return GUARDED_GIT_COMMANDS.get(subcommand)
+
+
+def config_is_read_only(arguments: list[str]) -> bool:
+    mutation_options = {
+        "--add",
+        "--edit",
+        "--remove-section",
+        "--rename-section",
+        "--replace-all",
+        "--unset",
+        "--unset-all",
+        "-e",
+    }
+    if any(
+        argument in mutation_options
+        or argument.startswith(
+            (
+                "--add=",
+                "--remove-section=",
+                "--rename-section=",
+                "--replace-all=",
+                "--unset=",
+                "--unset-all=",
+            )
+        )
+        for argument in arguments
+    ):
+        return False
+    query_options = {
+        "--get",
+        "--get-all",
+        "--get-color",
+        "--get-colorbool",
+        "--get-regexp",
+        "--get-urlmatch",
+        "--list",
+        "--name-only",
+        "-l",
+    }
+    if any(argument in query_options for argument in arguments):
+        return True
+    value_options = {
+        "--default",
+        "--expiry-date",
+        "--type",
+    }
+    positionals: list[str] = []
+    skip_next = False
+    for argument in arguments:
+        if skip_next:
+            skip_next = False
+            continue
+        if argument in value_options:
+            skip_next = True
+            continue
+        if argument.startswith("-"):
+            continue
+        positionals.append(argument)
+    return len(positionals) <= 1
+
+
+def executable_shell_heredoc(command: str) -> bool:
+    for line in command.splitlines():
+        if not heredoc_markers(line):
+            continue
+        tokens = strip_control_words(unwrap_command_prefix(command_tokens(line)))
+        if tokens and executable_name(tokens[0]) in {"bash", "sh", "zsh"}:
+            return True
+    return False
 
 
 def tag_is_read_only(arguments: list[str]) -> bool:
@@ -552,6 +665,10 @@ def git_operations(
 ) -> list[DetectedGitAction]:
     if recursion_depth > 4:
         raise ContractError("Nested shell command depth exceeds agent-guard limit")
+    if executable_shell_heredoc(command):
+        raise ContractError(
+            "executable shell heredocs are not supported by agent guard"
+        )
     if ("$(" in command or "`" in command) and re.search(
         r"(?:^|[^A-Za-z0-9_-])(?:git|gh|gt)(?:\s|$)", command
     ):
@@ -626,20 +743,62 @@ def git_operations(
             )
             prior_guarded_mutation = True
             continue
-        if (
-            gh_index is not None
-            and tokens[gh_index] == "api"
-            and gh_api_merges(tokens[gh_index + 1 :], current_directory)
-        ):
+        if gh_index is not None and tokens[gh_index : gh_index + 2] == ["pr", "create"]:
             operations.append(
                 DetectedGitAction(
-                    "pr-merge",
+                    "push",
+                    tuple(tokens[gh_index + 2 :]),
+                    target_root=root,
+                    source="gh",
+                )
+            )
+            prior_guarded_mutation = True
+            continue
+        if gh_index is not None and tokens[gh_index] == "api":
+            api_action = gh_api_action(tokens[gh_index + 1 :], current_directory)
+            if api_action is None:
+                continue
+            operations.append(
+                DetectedGitAction(
+                    api_action,
                     tuple(tokens[gh_index + 1 :]),
                     target_root=root,
                     source="gh",
                 )
             )
             prior_guarded_mutation = True
+            continue
+        if gh_index is not None and tokens[gh_index] == "alias":
+            if tokens[gh_index + 1 : gh_index + 2] != ["list"]:
+                operations.append(
+                    DetectedGitAction(
+                        "history-write",
+                        tuple(tokens[gh_index + 1 :]),
+                        target_root=root,
+                        selection_failure=(
+                            "GitHub CLI alias mutation is not supported by agent guard"
+                        ),
+                        source="gh",
+                    )
+                )
+                prior_state_change = True
+            continue
+        if (
+            gh_index is not None
+            and tokens[gh_index] not in GH_APPROVED_TOP_LEVEL_COMMANDS
+        ):
+            operations.append(
+                DetectedGitAction(
+                    "history-write",
+                    tuple(tokens[gh_index + 1 :]),
+                    target_root=root,
+                    selection_failure=(
+                        "GitHub CLI aliases are not supported by agent guard"
+                    ),
+                    source="gh",
+                )
+            )
+            prior_state_change = True
             continue
         if (
             len(tokens) >= 2
@@ -738,6 +897,34 @@ def git_operations(
             )
             prior_state_change = True
             continue
+        if (
+            subcommand == "clean"
+            and git_subcommand_action(subcommand, tokens[index + 1 :]) is not None
+        ):
+            operations.append(
+                DetectedGitAction(
+                    "history-write",
+                    tuple(tokens[index + 1 :]),
+                    target_root=root,
+                    selection_failure="git clean is not authorized",
+                )
+            )
+            prior_state_change = True
+            continue
+        if (
+            subcommand in {"config", "stash"}
+            and git_subcommand_action(subcommand, tokens[index + 1 :]) is not None
+        ):
+            operations.append(
+                DetectedGitAction(
+                    "history-write",
+                    tuple(tokens[index + 1 :]),
+                    target_root=root,
+                    selection_failure=f"git {subcommand} mutation is not authorized",
+                )
+            )
+            prior_state_change = True
+            continue
         action = git_subcommand_action(subcommand, tokens[index + 1 :])
         if action is None and selection_failure:
             operations.append(
@@ -771,6 +958,11 @@ def git_operations(
                         )
                     )
             continue
+        protected_failure = protected_history_write_failure(
+            subcommand, tokens[index + 1 :]
+        )
+        if protected_failure:
+            selection_failure = protected_failure
         if prior_state_change or prior_guarded_mutation:
             selection_failure = (
                 "compound command mutates repository state before a guarded Git action; "
@@ -811,6 +1003,17 @@ def with_compound_failure(operation: DetectedGitAction) -> DetectedGitAction:
     )
 
 
+def protected_history_write_failure(
+    subcommand: str, arguments: list[str]
+) -> str | None:
+    if subcommand not in {"branch", "checkout", "switch", "update-ref"}:
+        return None
+    protected = {"main", "master", "refs/heads/main", "refs/heads/master"}
+    if any(argument.lstrip("+") in protected for argument in arguments):
+        return f"git {subcommand} cannot update a protected branch"
+    return None
+
+
 def gh_subcommand_index(tokens: list[str]) -> int | None:
     if not tokens or executable_name(tokens[0]) != "gh":
         return None
@@ -832,13 +1035,21 @@ def gh_subcommand_index(tokens: list[str]) -> int | None:
     return None
 
 
-def gh_api_merges(arguments: list[str], cwd: Path | None = None) -> bool:
-    if any("mergePullRequest" in argument for argument in arguments):
-        return True
+def gh_api_action(arguments: list[str], cwd: Path | None = None) -> str | None:
+    merge_mutations = {
+        "addPullRequestToMergeQueue",
+        "enablePullRequestAutoMerge",
+        "enqueuePullRequest",
+        "mergePullRequest",
+    }
+    if any(
+        mutation in argument for argument in arguments for mutation in merge_mutations
+    ):
+        return "pr-merge"
     method = "GET"
     method_is_explicit = False
     endpoint = ""
-    indirect_payloads: list[str] = []
+    payloads: list[str] = []
     value_options = {
         "-F",
         "--field",
@@ -868,54 +1079,80 @@ def gh_api_merges(arguments: list[str], cwd: Path | None = None) -> bool:
             if index + 1 >= len(arguments):
                 raise ContractError(f"gh api option {argument} is missing its value")
             value = arguments[index + 1]
-            if argument in {"-F", "--field"}:
-                indirect_payloads.append(value)
-            if argument in {"-F", "--field", "-f", "--raw-field"} and not method_is_explicit:
+            if argument in {"-F", "--field", "-f", "--raw-field"}:
+                payloads.append(value)
+            if (
+                argument in {"-F", "--field", "-f", "--raw-field"}
+                and not method_is_explicit
+            ):
                 method = "POST"
             elif argument == "--input":
-                indirect_payloads.append(f"@{value}")
+                payloads.append(f"@{value}")
                 if not method_is_explicit:
                     method = "POST"
             index += 2
             continue
         elif argument.startswith("--field="):
-            indirect_payloads.append(argument.partition("=")[2])
+            payloads.append(argument.partition("=")[2])
             if not method_is_explicit:
                 method = "POST"
         elif argument.startswith("--raw-field="):
+            payloads.append(argument.partition("=")[2])
             if not method_is_explicit:
                 method = "POST"
-        elif (
-            (argument.startswith("-F") or argument.startswith("-f"))
-            and len(argument) > 2
-        ):
-            if argument.startswith("-F"):
-                indirect_payloads.append(argument[2:])
+        elif (argument.startswith("-F") or argument.startswith("-f")) and len(
+            argument
+        ) > 2:
+            payloads.append(argument[2:])
             if not method_is_explicit:
                 method = "POST"
         elif argument.startswith("--input="):
-            indirect_payloads.append(f"@{argument.partition('=')[2]}")
+            payloads.append(f"@{argument.partition('=')[2]}")
             if not method_is_explicit:
                 method = "POST"
         elif not argument.startswith("-") and not endpoint:
             endpoint = argument
         index += 1
-    if endpoint == "graphql" and graphql_payload_merges(indirect_payloads, cwd):
-        return True
-    return (
-        method in {"POST", "PUT"}
-        and re.search(r"(?:^|/)pulls/\d+/merge(?:$|\?)", endpoint) is not None
-    )
+    if endpoint == "graphql":
+        graphql_texts, opaque = graphql_payload_texts(payloads, cwd)
+        combined = "\n".join(graphql_texts)
+        if opaque or any(mutation in combined for mutation in merge_mutations):
+            return "pr-merge"
+        if re.search(r"\bmutation\b", combined):
+            return "history-write"
+        return None
+    if method not in {"DELETE", "PATCH", "POST", "PUT"}:
+        return None
+    if "$" in endpoint or "`" in endpoint:
+        return "pr-merge"
+    if re.search(
+        r"(?:^|/)(?:pulls/\d+/merge|merges)(?:$|\?)",
+        endpoint,
+    ):
+        return "pr-merge"
+    if re.search(r"(?:^|/)git/(?:refs|tags)(?:/|$|\?)", endpoint):
+        return "pr-merge"
+    return "history-write"
 
 
-def graphql_payload_merges(values: list[str], cwd: Path | None) -> bool:
+def gh_api_merges(arguments: list[str], cwd: Path | None = None) -> bool:
+    return gh_api_action(arguments, cwd) == "pr-merge"
+
+
+def graphql_payload_texts(
+    values: list[str], cwd: Path | None
+) -> tuple[list[str], bool]:
+    texts: list[str] = []
+    opaque = False
     for value in values:
         candidate = value.partition("=")[2] if "=" in value else value
         if not candidate.startswith("@"):
+            texts.append(candidate)
             continue
         filename = candidate[1:]
         if not filename or filename == "-":
-            return True
+            opaque = True
+            continue
         path = Path(filename)
         path = path if path.is_absolute() else (cwd or Path.cwd()) / path
         try:
@@ -924,9 +1161,8 @@ def graphql_payload_merges(values: list[str], cwd: Path | None) -> bool:
             raise ContractError(
                 f"Unable to inspect gh api payload {path}: {error}"
             ) from error
-        if "mergePullRequest" in content:
-            return True
-    return False
+        texts.append(content)
+    return texts, opaque
 
 
 def selected_git_directory(current: Path | None, value: str) -> Path | None:

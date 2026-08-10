@@ -31,9 +31,14 @@ NEGATIVE_VALIDATION = re.compile(
     r"skipped|todo)(?:\b|[.!])"
 )
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+GRAPHITE_QUEUE_BRANCH = re.compile(r"^gtmq_[A-Za-z0-9_-]+$")
+GRAPHITE_QUEUE_TITLE_PREFIX = "[Graphite MQ] Draft PR GROUP:"
+GRAPHITE_QUEUE_AUTHOR = "graphite-app[bot]"
 
 
 def validate_pull_request(pull_request: dict[str, Any]) -> list[str]:
+    if is_graphite_queue_pull_request(pull_request):
+        return []
     failures: list[str] = []
     title = str(pull_request.get("title") or "")
     body = HTML_COMMENT.sub("", str(pull_request.get("body") or ""))
@@ -56,6 +61,19 @@ def validate_pull_request(pull_request: dict[str, Any]) -> list[str]:
                 f"issue-backed branch {branch} must link Fixes #{issue_match.group(1)}"
             )
     return failures
+
+
+def is_graphite_queue_pull_request(pull_request: dict[str, Any]) -> bool:
+    """Recognize Graphite's authenticated synthetic queue pull request."""
+    title = str(pull_request.get("title") or "")
+    branch = str(pull_request.get("head", {}).get("ref") or "")
+    author = str(pull_request.get("user", {}).get("login") or "")
+    return bool(
+        pull_request.get("draft")
+        and GRAPHITE_QUEUE_BRANCH.fullmatch(branch)
+        and title.startswith(GRAPHITE_QUEUE_TITLE_PREFIX)
+        and author == GRAPHITE_QUEUE_AUTHOR
+    )
 
 
 def meaningful_validation(content: str) -> bool:

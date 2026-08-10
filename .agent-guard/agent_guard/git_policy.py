@@ -15,6 +15,7 @@ FORBIDDEN_FILE_PATTERNS = (
     re.compile(r"(^|/)\.env($|\.)"),
     re.compile(r"(^|/)\.dev\.vars($|\.)"),
     re.compile(r"(^|/)(?:credentials|service-account)\.json$", re.IGNORECASE),
+    re.compile(r"(^|/)archive/"),
     re.compile(r"\.(pem|p12|pfx|key)$", re.IGNORECASE),
 )
 SECRET_PATTERNS = (
@@ -24,7 +25,8 @@ SECRET_PATTERNS = (
     re.compile(r"AKIA[A-Z0-9]{16}"),
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(
-        r"(?i)(?:api[_-]?key|secret|password|access[_-]?token|_authToken)"
+        r"(?i)[\"']?(?:api[_-]?key|secret|password|access[_-]?token|_authToken)"
+        r"[\"']?"
         r"\s*[:=]\s*(?:"
         r"\"(?!example\b|placeholder\b|redacted\b|<redacted>|\{|\$)"
         r"(?:\\.|[^\"\r\n]){8,}\""
@@ -33,7 +35,8 @@ SECRET_PATTERNS = (
         r")"
     ),
     re.compile(
-        r"(?i)(?:api[_-]?key|secret|password|access[_-]?token|_authToken)"
+        r"(?i)[\"']?(?:api[_-]?key|secret|password|access[_-]?token|_authToken)"
+        r"[\"']?"
         r"\s*[:=]\s*"
         r"(?!example\b|placeholder\b|redacted\b|<redacted>|\{|\$)"
         r"(?![A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+"
@@ -93,6 +96,14 @@ def commit_selects_worktree_content(arguments: tuple[str, ...]) -> bool:
             ("--include=", "--only=", "--pathspec-from-file=")
         ):
             return True
+        if (
+            argument.startswith("-")
+            and not argument.startswith("--")
+            and len(argument) > 2
+            and argument[1] not in {"C", "F", "c", "m"}
+            and any(flag in argument[1:] for flag in {"a", "i", "o", "p"})
+        ):
+            return True
         if argument == "--":
             return index + 1 < len(arguments)
         if argument in COMMIT_VALUE_OPTIONS:
@@ -131,12 +142,15 @@ def default_base(root: Path) -> str | None:
 
 
 def outgoing_commits(
-    root: Path, base: str | None = None, heads: tuple[str, ...] = ()
+    root: Path,
+    base: str | None = None,
+    heads: tuple[str, ...] = (),
+    remote: str = "origin",
 ) -> list[str]:
     if heads:
         resolved = [git_output(root, "rev-parse", "--verify", head) for head in heads]
         return git_output(
-            root, "rev-list", "--reverse", *resolved, "--not", "--remotes=origin"
+            root, "rev-list", "--reverse", *resolved, "--not", f"--remotes={remote}"
         ).splitlines()
     reference = base or default_base(root)
     if reference is None:
@@ -151,10 +165,18 @@ def outgoing_commits(
 
 
 def secret_findings(
-    root: Path, base: str | None = None, heads: tuple[str, ...] = ()
+    root: Path,
+    base: str | None = None,
+    heads: tuple[str, ...] = (),
+    remote: str = "origin",
 ) -> list[str]:
     findings: list[str] = []
-    for commit in outgoing_commits(root, base, heads):
+    for head in heads:
+        kind_code, kind, _ = command_output(root, "git", "cat-file", "-t", head)
+        if kind_code == 0 and kind == "tag":
+            tag_message = git_output(root, "cat-file", "-p", head)
+            findings.extend(secret_findings_for_text(f"tag {head}", tag_message))
+    for commit in outgoing_commits(root, base, heads, remote):
         names = git_output(
             root,
             "diff-tree",
@@ -168,6 +190,9 @@ def secret_findings(
         ).splitlines()
         diff = git_output(root, "show", "--format=", "--unified=0", commit)
         findings.extend(secret_findings_for_diff(commit[:12], names, diff))
+        message = git_output(root, "show", "-s", "--format=%B", commit)
+        findings.extend(secret_findings_for_text(f"{commit[:12]} message", message))
+        findings.extend(binary_blob_secret_findings(root, commit[:12], commit, names))
     return list(dict.fromkeys(findings))
 
 
@@ -180,7 +205,9 @@ def staged_secret_findings(root: Path) -> list[str]:
         "--diff-filter=ACMRTUXB",
     ).splitlines()
     diff = git_output(root, "diff", "--cached", "--unified=0")
-    return secret_findings_for_diff("staged", names, diff)
+    findings = secret_findings_for_diff("staged", names, diff)
+    findings.extend(binary_blob_secret_findings(root, "staged", ":", names))
+    return list(dict.fromkeys(findings))
 
 
 def secret_findings_for_diff(identifier: str, names: list[str], diff: str) -> list[str]:
@@ -194,12 +221,120 @@ def secret_findings_for_diff(identifier: str, names: list[str], diff: str) -> li
         for line in diff.splitlines()
         if line.startswith("+") and not line.startswith("+++")
     )
-    for pattern in SECRET_PATTERNS:
-        if pattern.search(added_lines):
-            findings.append(
-                f"{identifier} secret-like content matched detector: {pattern.pattern}"
-            )
+    findings.extend(secret_findings_for_text(identifier, added_lines))
     return findings
+
+
+def secret_findings_for_text(identifier: str, content: str) -> list[str]:
+    return [
+        f"{identifier} secret-like content matched detector: {pattern.pattern}"
+        for pattern in SECRET_PATTERNS
+        if pattern.search(content)
+    ]
+
+
+def binary_blob_secret_findings(
+    root: Path,
+    identifier: str,
+    revision: str,
+    names: list[str],
+) -> list[str]:
+    findings: list[str] = []
+    for name in names:
+        diff_args = (
+            ["diff", "--cached", "--numstat", "--", name]
+            if revision == ":"
+            else ["show", "--numstat", "--format=", revision, "--", name]
+        )
+        code, numstat, _ = command_output(root, "git", *diff_args)
+        if code != 0 or not any(
+            line.startswith("-\t-\t") for line in numstat.splitlines()
+        ):
+            continue
+        blob = subprocess.run(
+            [
+                "git",
+                "show",
+                f"{revision}{name}" if revision == ":" else f"{revision}:{name}",
+            ],
+            cwd=root,
+            capture_output=True,
+            check=False,
+        )
+        if blob.returncode:
+            continue
+        content = blob.stdout.decode("utf-8", errors="ignore")
+        findings.extend(
+            secret_findings_for_text(f"{identifier} binary {name}", content)
+        )
+    return findings
+
+
+def commit_message_secret_findings(root: Path, arguments: tuple[str, ...]) -> list[str]:
+    findings: list[str] = []
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        value: str | None = None
+        label = "commit message"
+        if argument in {"-m", "--message", "--trailer"}:
+            if index + 1 >= len(arguments):
+                return [f"{argument} is missing its value"]
+            value = arguments[index + 1]
+            index += 2
+        elif argument.startswith("-m") and len(argument) > 2:
+            value = argument[2:]
+            index += 1
+        elif argument.startswith(("--message=", "--trailer=")):
+            value = argument.partition("=")[2]
+            index += 1
+        elif argument in {"-F", "--file"} or argument.startswith("--file="):
+            if "=" in argument:
+                filename = argument.partition("=")[2]
+                index += 1
+            else:
+                if index + 1 >= len(arguments):
+                    return [f"{argument} is missing its value"]
+                filename = arguments[index + 1]
+                index += 2
+            if filename == "-":
+                findings.append("commit message from stdin cannot be inspected safely")
+                continue
+            path = Path(filename)
+            path = path if path.is_absolute() else root / path
+            try:
+                value = path.read_text(encoding="utf-8")
+            except OSError as error:
+                findings.append(
+                    f"unable to inspect commit message file {path}: {error}"
+                )
+            label = f"commit message file {filename}"
+        elif argument in {
+            "-C",
+            "-c",
+            "--reuse-message",
+            "--reedit-message",
+            "--fixup",
+            "--squash",
+        }:
+            if index + 1 >= len(arguments):
+                return [f"{argument} is missing its value"]
+            reference = arguments[index + 1]
+            code, value, error = command_output(
+                root, "git", "show", "-s", "--format=%B", reference
+            )
+            if code != 0:
+                findings.append(
+                    f"unable to inspect reused commit message {reference}: {error}"
+                )
+                value = None
+            label = f"reused commit message {reference}"
+            index += 2
+        else:
+            index += 1
+        if value is not None:
+            findings.extend(secret_findings_for_text(label, value))
+    return list(dict.fromkeys(findings))
 
 
 def is_forbidden_file(name: str) -> bool:
@@ -302,6 +437,7 @@ def protected_push_failures(
             "--force-with-lease",
             "--mirror",
             "--prune",
+            "--tags",
             "-f",
         }
         or argument.startswith("--force-with-lease=")
@@ -352,6 +488,25 @@ def push_sources(arguments: tuple[str, ...]) -> tuple[str, ...]:
 
 
 def push_refspecs(arguments: tuple[str, ...]) -> list[str]:
+    positionals, repository_from_option = push_positionals(arguments)
+    refspecs = positionals if repository_from_option else positionals[1:]
+    if refspecs[:1] == ["tag"]:
+        return refspecs[1:]
+    return refspecs
+
+
+def push_repository(arguments: tuple[str, ...]) -> str | None:
+    positionals, repository_from_option = push_positionals(arguments)
+    if repository_from_option:
+        for index, argument in enumerate(arguments):
+            if argument == "--repo" and index + 1 < len(arguments):
+                return arguments[index + 1]
+            if argument.startswith("--repo="):
+                return argument.partition("=")[2]
+    return positionals[0] if positionals else None
+
+
+def push_positionals(arguments: tuple[str, ...]) -> tuple[list[str], bool]:
     options_with_values = {
         "--exec",
         "--push-option",
@@ -389,10 +544,7 @@ def push_refspecs(arguments: tuple[str, ...]) -> list[str]:
         if argument.startswith("-"):
             continue
         positionals.append(argument)
-    refspecs = positionals if repository_from_option else positionals[1:]
-    if refspecs[:1] == ["tag"]:
-        return refspecs[1:]
-    return refspecs
+    return positionals, repository_from_option
 
 
 def protected_ref(reference: str) -> bool:
@@ -450,19 +602,25 @@ def validate_git_action(
         if commit_selects_worktree_content(arguments):
             failures.append("commit must not stage files during execution")
         failures.extend(staged_secret_findings(root))
+        failures.extend(commit_message_secret_findings(root, arguments))
     if action == "push":
         failures.extend(
             protected_push_failures(arguments, require_refspec=source == "git")
         )
+        remote = push_repository(arguments) if source == "git" else "origin"
+        if source == "git" and remote != "origin":
+            failures.append("agent pushes are restricted to the origin remote")
         heads = push_sources(arguments) if source == "git" else ()
-        failures.extend(secret_findings(root, heads=heads))
+        failures.extend(secret_findings(root, heads=heads, remote=remote or "origin"))
         validations = [
             item for item in contract["evidence"] if item.get("type") == "validation"
         ]
         if not validations:
             failures.append("push requires recorded validation evidence")
-        elif validations[-1].get("worktree_digest") != worktree_digest(root):
+        elif validations[-1].get("head") != git_output(
+            root, "rev-parse", "HEAD"
+        ) or validations[-1].get("worktree_digest") != worktree_digest(root):
             failures.append(
-                "push requires validation evidence bound to current repository contents"
+                "push requires validation evidence bound to current HEAD and contents"
             )
     return failures
