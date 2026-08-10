@@ -30,19 +30,6 @@ on:
   reaction: "eyes"
   permissions:
     pull-requests: read
-  steps:
-    - id: check
-      continue-on-error: true
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        MAX_OPEN_PRS=4
-        if [[ "$GITHUB_EVENT_NAME" != "schedule" ]]; then exit 0; fi
-        COUNT=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --label repo-assist --json number --jq 'length')
-        [[ "$COUNT" -lt "$MAX_OPEN_PRS" ]]
-      # exits 0 if not scheduled or <MAX_OPEN_PRS open PRs, 1 if ≥MAX_OPEN_PRS
-
-if: needs.pre_activation.outputs.check_result == 'success'
 
 timeout-minutes: 60
 
@@ -190,20 +177,24 @@ steps:
       eligible_task_ids = [3, 4, 5, 8, 9, 10]
       task_ids = [task_id for task_id in task_ids if task_id in eligible_task_ids]
       weights = {task_id: weights[task_id] for task_id in task_ids}
-      task_weights = [weights[task_id] for task_id in task_ids]
-      chosen, seen = [], set()
-      if NUM_TASKS_PER_RUN > 0 and task_ids:
-          for t in rng.choices(task_ids, weights=task_weights, k=30):
-              if t not in seen:
-                  seen.add(t)
-                  chosen.append(t)
-              if len(chosen) >= NUM_TASKS_PER_RUN:
-                  break
+      maintenance_selected = repo_assist_prs > 0
+      available_task_ids = task_ids.copy()
+      chosen = []
+      for _ in range(min(NUM_TASKS_PER_RUN, len(available_task_ids))):
+          available_weights = [weights[task_id] for task_id in available_task_ids]
+          selected_task = rng.choices(
+              available_task_ids,
+              weights=available_weights,
+              k=1,
+          )[0]
+          chosen.append(selected_task)
+          available_task_ids.remove(selected_task)
 
       print('=== Repo Assist Task Selection ===')
       print(f'Open issues       : {open_issues}')
       print(f'Unlabelled issues : {unlabelled}')
       print(f'Repo Assist PRs   : {repo_assist_prs}')
+      print(f'Run PR maintenance: {maintenance_selected}')
       print(f'Other open PRs    : {other_prs}')
       print()
       print('Task weights:')
@@ -215,6 +206,7 @@ steps:
 
       result = {
           'open_issues': open_issues, 'unlabelled_issues': unlabelled,
+          'maintenance_selected': maintenance_selected,
           'repo_assist_prs': repo_assist_prs, 'other_prs': other_prs,
           'task_names': task_names,
           'weights': {str(k): round(v, 2) for k, v in weights.items()},
@@ -266,9 +258,11 @@ Read memory at the **start** of every run; update it at the **end**.
 
 ## Workflow
 
-Each run, the deterministic pre-step collects live repo data (open issue count, unlabelled issue count, open Repo Assist PRs, other open PRs), computes a **weighted probability** for each task, and selects up to four tasks using a seeded random draw. The number selected is limited to the remaining slots under the four-open-Repo-Assist-PR cap. The weights and selected tasks are printed in the workflow logs. You will find the selection in `/tmp/gh-aw/task_selection.json`.
+Each run, the deterministic pre-step collects live repo data (open issue count, unlabelled issue count, open Repo Assist PRs, other open PRs), computes a **weighted probability** for each eligible implementation task, and selects up to four tasks without replacement using a seeded random draw. The number selected is limited to the remaining slots under the four-open-Repo-Assist-PR cap. Existing Repo Assist pull-request maintenance is selected independently and never consumes a new pull-request slot. The weights and selected tasks are printed in the workflow logs. You will find the selection in `/tmp/gh-aw/task_selection.json`.
 
 **Read the task selection**: at the start of your run, read `/tmp/gh-aw/task_selection.json` and confirm the selected tasks in your opening reasoning. Execute each selected task independently (plus the mandatory Task 11), with exactly one issue and one pull request per implementation task. If a selected task is not applicable to the current repo state, substitute its fallback task rather than doing nothing. If the fallback is already selected, was already used as a substitution, or is also not applicable, mark the slot blocked with the exact reason instead of executing a duplicate task. Substitutions originating from selected implementation tasks must never switch to Tasks 1, 2, 6, or 7. Record substitutions and blocked slots in the Task 11 run history entry.
+
+When `maintenance_selected` is true, execute Task 6 before the implementation slots. Task 6 may update existing Repo Assist pull-request branches but must not create an issue, branch, or pull request and must not consume an implementation slot. Record its result separately.
 
 | Selected task | Not applicable when… | Fallback |
 |---|---|---|
@@ -436,7 +430,7 @@ Maintain a single open issue titled `[repo-assist] Monthly Activity {YYYY}-{MM}`
    - PRs that should be closed (stale, superseded, etc.)
    - Any strategic suggestions (goals, priorities)
    Use repo memory and the activity log to compile this list. Include direct links for every item. Keep entries to one line each.
-5. Do not update the activity issue if nothing was done in the current run. However, if you conclude "nothing to do", first verify this by checking: (a) Are there any open issues without a Repo Assist comment? (b) Are there issues in your memory flagged for attention? (c) Are there any bugs that could be investigated or fixed? If any of these are true, go back and do that work instead of concluding with no action.
+5. Do not update the activity issue if nothing was done in the current run. Before concluding "nothing to do", verify only the permitted work: (a) selected or fallback implementation tasks, (b) implementation work flagged in memory, and (c) Task 6 maintenance when selected. Do not revive Tasks 1, 2, or 7 from this recovery check.
 
 ## Guidelines
 
