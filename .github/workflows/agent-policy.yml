@@ -13,4 +13,4 @@ jobs:
     name: Validate agent delivery policy
     runs-on: ubuntu-latest
     steps:
-      - uses: Plaintext-Lab/agentic-workflows/.github/actions/pr-policy@65a5cde3730aef6a9afd5a84fc94c6c04e4b5399
+      - uses: ./.github/actions/pr-policy

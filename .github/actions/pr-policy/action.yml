@@ -1,0 +1,9 @@
+name: Validate agent delivery policy
+description: Validate host-neutral pull-request metadata for any coding agent
+
+runs:
+  using: composite
+  steps:
+    - name: Validate pull-request metadata
+      shell: bash
+      run: python3 "$GITHUB_ACTION_PATH/check.py" --event "$GITHUB_EVENT_PATH"
