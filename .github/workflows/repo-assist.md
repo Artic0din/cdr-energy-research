@@ -188,6 +188,9 @@ steps:
       MAX_OPEN_PRS = 4
       MAX_TASKS_PER_RUN = 4
       NUM_TASKS_PER_RUN = min(MAX_TASKS_PER_RUN, max(0, MAX_OPEN_PRS - repo_assist_prs))
+      eligible_task_ids = [3, 4, 5, 6, 8, 9, 10]
+      task_ids = [task_id for task_id in task_ids if task_id in eligible_task_ids]
+      task_weights = [weights[task_id] for task_id in task_ids]
       chosen, seen = [], set()
       for t in rng.choices(task_ids, weights=task_weights, k=30):
           if t not in seen:
@@ -320,7 +323,7 @@ Update memory with labels applied and cursor position.
 1. Review issues labelled `bug`, `help wanted`, or `good first issue`, plus any identified as fixable during investigation.
 2. For each fixable issue:
    a. Check memory — skip if you've already tried and the attempt is still open. Never create duplicate PRs.
-   b. Create a fresh branch off the default branch of the repository: `repo-assist/fix-issue-<N>-<desc>`.
+   b. Create a fresh branch off the default branch of the repository: `repo-assist/<N>-<desc>`.
    c. Implement a minimal, surgical fix. Do not refactor unrelated code.
    d. **Build and test (required)**: do not create a PR if the build fails or tests fail due to your changes. If tests fail due to infrastructure, create the PR but document it.
    e. Add a test for the bug if feasible; re-run tests.
