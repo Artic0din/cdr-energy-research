@@ -6,13 +6,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
 import re
 import sys
-from typing import Any, Callable
 import urllib.error
 import urllib.request
-
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
 CONVENTIONAL_TITLE = re.compile(
     r"^(?:feat|fix|test|refactor|perf|docs|style|chore|ci|build|revert)"
