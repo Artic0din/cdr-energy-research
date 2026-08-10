@@ -5,10 +5,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import re
 import sys
-from typing import Any
+from typing import Any, Callable
+import urllib.error
+import urllib.request
 
 
 CONVENTIONAL_TITLE = re.compile(
@@ -31,17 +34,24 @@ NEGATIVE_VALIDATION = re.compile(
     r"skipped|todo)(?:\b|[.!])"
 )
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+FENCED_CODE = re.compile(
+    r"(?ms)^[ \t]*(?P<fence>`{3,}|~{3,})[^\n]*\n.*?^[ \t]*(?P=fence)[ \t]*$"
+)
 GRAPHITE_QUEUE_BRANCH = re.compile(r"^gtmq_[A-Za-z0-9_-]+$")
 GRAPHITE_QUEUE_TITLE_PREFIX = "[Graphite MQ] Draft PR GROUP:"
 GRAPHITE_QUEUE_AUTHOR = "graphite-app[bot]"
+IssueLookup = Callable[[int], tuple[bool, str]]
 
 
-def validate_pull_request(pull_request: dict[str, Any]) -> list[str]:
+def validate_pull_request(
+    pull_request: dict[str, Any], issue_lookup: IssueLookup | None = None
+) -> list[str]:
     if is_graphite_queue_pull_request(pull_request):
         return []
     failures: list[str] = []
     title = str(pull_request.get("title") or "")
     body = HTML_COMMENT.sub("", str(pull_request.get("body") or ""))
+    linkable_body = FENCED_CODE.sub("", body)
     branch = str(pull_request.get("head", {}).get("ref") or "")
     if pull_request.get("draft"):
         failures.append("pull request must be ready for review, not draft")
@@ -55,12 +65,51 @@ def validate_pull_request(pull_request: dict[str, Any]) -> list[str]:
         failures.append("pull-request validation section has no verification evidence")
     issue_match = ISSUE_BRANCH.search(branch)
     if issue_match:
-        linked = {match.group(1) for match in ISSUE_LINK.finditer(body)}
-        if issue_match.group(1) not in linked:
+        issue_number = issue_match.group(1)
+        linked = {match.group(1) for match in ISSUE_LINK.finditer(linkable_body)}
+        if linked != {issue_number}:
             failures.append(
-                f"issue-backed branch {branch} must link Fixes #{issue_match.group(1)}"
+                f"issue-backed pull request must close only issue #{issue_number}"
             )
+        elif issue_lookup is not None:
+            issue_is_open, issue_failure = issue_lookup(int(issue_number))
+            if not issue_is_open:
+                failures.append(issue_failure)
     return failures
+
+
+def github_issue_lookup(issue_number: int) -> tuple[bool, str]:
+    repository = os.environ.get("GITHUB_REPOSITORY", "")
+    token = os.environ.get("AGENT_POLICY_GITHUB_TOKEN", "")
+    api_url = os.environ.get("GITHUB_API_URL", "https://api.github.com")
+    if not repository or not token:
+        return False, f"unable to verify linked issue #{issue_number}"
+    request = urllib.request.Request(
+        f"{api_url}/repos/{repository}/issues/{issue_number}",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "agent-delivery-policy",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            issue = json.load(response)
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            return False, f"linked issue #{issue_number} does not exist"
+        return (
+            False,
+            f"unable to verify linked issue #{issue_number}: HTTP {error.code}",
+        )
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
+        return False, f"unable to verify linked issue #{issue_number}: {error}"
+    if issue.get("pull_request") is not None:
+        return False, f"linked item #{issue_number} is a pull request, not an issue"
+    if issue.get("state") != "open":
+        return False, f"linked issue #{issue_number} is not open"
+    return True, ""
 
 
 def is_graphite_queue_pull_request(pull_request: dict[str, Any]) -> bool:
@@ -79,6 +128,10 @@ def is_graphite_queue_pull_request(pull_request: dict[str, Any]) -> bool:
 def meaningful_validation(content: str) -> bool:
     for line in content.splitlines():
         stripped = line.strip().lstrip("-* ").strip()
+        if re.fullmatch(
+            r"`{3,}(?:[A-Za-z0-9_+-]+)?|~{3,}(?:[A-Za-z0-9_+-]+)?", stripped
+        ):
+            continue
         if re.match(r"^\[\s\]", stripped):
             continue
         stripped = re.sub(r"^\[[ xX]\]\s*", "", stripped)
@@ -106,7 +159,7 @@ def main() -> int:
     pull_request = payload.get("pull_request")
     if not isinstance(pull_request, dict):
         parser.error("event payload does not contain a pull_request object")
-    failures = validate_pull_request(pull_request)
+    failures = validate_pull_request(pull_request, issue_lookup=github_issue_lookup)
     print(render(failures), end="")
     return 1 if failures else 0
 

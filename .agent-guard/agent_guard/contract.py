@@ -225,7 +225,6 @@ def worktree_digest(root: Path) -> str:
                 root,
                 "ls-files",
                 "--others",
-                "--exclude-standard",
                 "-z",
             ).split("\0"),
         )
@@ -296,6 +295,12 @@ def validate_shape(contract: dict[str, Any]) -> None:
             raise ContractError("Contract evidence type must be non-empty text")
         if not isinstance(evidence.get("value"), str) or not evidence["value"].strip():
             raise ContractError("Contract evidence value must be non-empty text")
+        if evidence.get("status", "informational") not in {
+            "passed",
+            "failed",
+            "informational",
+        }:
+            raise ContractError("Invalid contract evidence status")
     preflight = contract.get("preflight")
     if preflight is not None:
         if not isinstance(preflight, dict) or not isinstance(
@@ -439,15 +444,23 @@ def set_delegate_status(
 
 
 def record_evidence(
-    contract: dict[str, Any], evidence_type: str, value: str, root: Path | None = None
+    contract: dict[str, Any],
+    evidence_type: str,
+    value: str,
+    root: Path | None = None,
+    status: str | None = None,
 ) -> None:
     if not evidence_type.strip() or not value.strip():
         raise ContractError("Evidence type and value are required")
     evidence = {
         "type": evidence_type.strip(),
         "value": value.strip(),
+        "status": status
+        or ("passed" if evidence_type.strip() == "validation" else "informational"),
         "recorded_at": now_iso(),
     }
+    if evidence["status"] not in {"passed", "failed", "informational"}:
+        raise ContractError("Invalid evidence status")
     if root is not None:
         evidence["head"] = git_output(root, "rev-parse", "HEAD")
         evidence["worktree_digest"] = worktree_digest(root)
@@ -482,6 +495,8 @@ def completion_failures(contract: dict[str, Any], root: Path) -> list[str]:
                 for item in reversed(contract["evidence"])
                 if item.get("type") == required
             )
+            if required == "validation" and latest.get("status") != "passed":
+                failures.append("required validation evidence is not passing")
             if (
                 latest.get("head") != current_head
                 or latest.get("worktree_digest") != current_digest

@@ -14,7 +14,7 @@ description: |
   Always polite, constructive, and mindful of the project's goals.
 
 imports:
-  - Plaintext-Lab/agentic-workflows/.github/workflows/shared/repo-assist-policy.md@4cc19f5acca35596e7a0e7dc4ea3fb238b1a1a18
+  - Plaintext-Lab/agentic-workflows/.github/workflows/shared/repo-assist-policy.md@19c3ef232d91876ebc18f62ef0a853b326e886a8
 
 on:
   schedule: weekly

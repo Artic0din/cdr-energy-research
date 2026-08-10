@@ -71,7 +71,10 @@ def cmd_deliverable(args: argparse.Namespace) -> int:
 def cmd_evidence(args: argparse.Namespace) -> int:
     root = repository_root(Path(args.cwd) if args.cwd else None)
     update_contract(
-        root, lambda contract: record_evidence(contract, args.type, args.value, root)
+        root,
+        lambda contract: record_evidence(
+            contract, args.type, args.value, root, status=args.status
+        ),
     )
     return 0
 
@@ -197,6 +200,12 @@ def build_parser() -> argparse.ArgumentParser:
     add_common_cwd(evidence)
     evidence.add_argument("--type", required=True)
     evidence.add_argument("--value", required=True)
+    evidence.add_argument(
+        "--status",
+        choices=("passed", "failed", "informational"),
+        default="informational",
+        help="Use passed for successful validation; omitted evidence is informational",
+    )
     evidence.set_defaults(handler=cmd_evidence)
     delegate = subparsers.add_parser("add-delegate")
     add_common_cwd(delegate)

@@ -92,6 +92,9 @@ def commit_selects_worktree_content(arguments: tuple[str, ...]) -> bool:
     index = 0
     while index < len(arguments):
         argument = arguments[index]
+        if argument.startswith(("-u", "-S")) and not argument.startswith("--"):
+            index += 1
+            continue
         if argument in COMMIT_CONTENT_OPTIONS or argument.startswith(
             ("--include=", "--only=", "--pathspec-from-file=")
         ):
@@ -192,6 +195,14 @@ def secret_findings(
         findings.extend(secret_findings_for_diff(commit[:12], names, diff))
         message = git_output(root, "show", "-s", "--format=%B", commit)
         findings.extend(secret_findings_for_text(f"{commit[:12]} message", message))
+        identity = git_output(
+            root,
+            "show",
+            "-s",
+            "--format=%an%n%ae%n%cn%n%ce",
+            commit,
+        )
+        findings.extend(secret_findings_for_text(f"{commit[:12]} identity", identity))
         findings.extend(binary_blob_secret_findings(root, commit[:12], commit, names))
     return list(dict.fromkeys(findings))
 
@@ -309,6 +320,18 @@ def commit_message_secret_findings(root: Path, arguments: tuple[str, ...]) -> li
                     f"unable to inspect commit message file {path}: {error}"
                 )
             label = f"commit message file {filename}"
+        elif argument in {"--author", "--date"} or argument.startswith(
+            ("--author=", "--date=")
+        ):
+            if "=" in argument:
+                value = argument.partition("=")[2]
+                index += 1
+            else:
+                if index + 1 >= len(arguments):
+                    return [f"{argument} is missing its value"]
+                value = arguments[index + 1]
+                index += 2
+            label = "commit identity metadata"
         elif argument in {
             "-C",
             "-c",
@@ -441,9 +464,15 @@ def protected_push_failures(
             "-f",
         }
         or argument.startswith("--force-with-lease=")
+        or clustered_short_force(argument)
         for argument in arguments
     ):
         failures.append("push option can update or delete protected remote branches")
+    if any(
+        argument == "--follow-tags" or argument.startswith("--follow-tags=")
+        for argument in arguments
+    ):
+        failures.append("push --follow-tags is not supported by agent guard")
     delete_index = next(
         (
             index
@@ -460,6 +489,9 @@ def protected_push_failures(
     if require_refspec and not refspecs and delete_index is None:
         failures.append("git push must name an explicit source refspec")
     for argument in refspecs:
+        if "$" in argument or "`" in argument:
+            failures.append("push refspec contains an unresolved shell expansion")
+            continue
         normalized = argument.lstrip("+")
         if normalized == ":" or "*" in argument:
             failures.append("push uses a matching or wildcard refspec")
@@ -471,6 +503,14 @@ def protected_push_failures(
         if protected_ref(destination):
             failures.append(f"push targets protected remote ref {destination}")
     return list(dict.fromkeys(failures))
+
+
+def clustered_short_force(argument: str) -> bool:
+    return bool(
+        argument.startswith("-")
+        and not argument.startswith(("--", "-o"))
+        and "f" in argument[1:]
+    )
 
 
 def push_sources(arguments: tuple[str, ...]) -> tuple[str, ...]:
@@ -604,9 +644,10 @@ def validate_git_action(
         failures.extend(staged_secret_findings(root))
         failures.extend(commit_message_secret_findings(root, arguments))
     if action == "push":
-        failures.extend(
-            protected_push_failures(arguments, require_refspec=source == "git")
-        )
+        if source == "git":
+            failures.extend(protected_push_failures(arguments))
+        elif source == "gh":
+            failures.extend(gh_pr_create_failures(arguments))
         remote = push_repository(arguments) if source == "git" else "origin"
         if source == "git" and remote != "origin":
             failures.append("agent pushes are restricted to the origin remote")
@@ -617,10 +658,34 @@ def validate_git_action(
         ]
         if not validations:
             failures.append("push requires recorded validation evidence")
+        elif validations[-1].get("status") != "passed":
+            failures.append("push requires passing validation evidence")
         elif validations[-1].get("head") != git_output(
             root, "rev-parse", "HEAD"
         ) or validations[-1].get("worktree_digest") != worktree_digest(root):
             failures.append(
                 "push requires validation evidence bound to current HEAD and contents"
             )
+    return failures
+
+
+def gh_pr_create_failures(arguments: tuple[str, ...]) -> list[str]:
+    failures: list[str] = []
+    head: str | None = None
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        if argument in {"-H", "--head"}:
+            if index + 1 >= len(arguments):
+                return [f"gh pr create option {argument} is missing its value"]
+            head = arguments[index + 1]
+            index += 2
+            continue
+        if argument.startswith("--head="):
+            head = argument.partition("=")[2]
+        elif argument.startswith("-H") and len(argument) > 2:
+            head = argument[2:]
+        index += 1
+    if head and protected_ref(head.rsplit(":", 1)[-1]):
+        failures.append(f"gh pr create cannot publish protected head branch {head}")
     return failures

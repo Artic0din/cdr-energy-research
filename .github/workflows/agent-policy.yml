@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
   pull-requests: read
 
 jobs:
@@ -44,10 +45,12 @@ jobs:
           (
             cd "$candidate"
             printf '%s  %s\n' \
-              'f77ced69c48879bfbeccbd41a22c16379dd1f4b3e7927633a9a291467ea6e6e1' action.yml \
-              'cc8a24d749f74cccb675dafaacd3e70b5cb8f7bffe49288c7c1d95bbec9b05f6' check.py \
+              '37ca0e917f6a8451408abd0b134e68da8b877f49e2ae6647fd54ba0a67e16c8e' action.yml \
+              'a289a5838c0a22a2997b67d8dbf563b063d288da2f210c16c8be68a9a5619d59' check.py \
               | sha256sum --check -
           )
           mkdir -p .github/actions/pr-policy
           cp "$candidate/action.yml" "$candidate/check.py" .github/actions/pr-policy/
       - uses: ./.github/actions/pr-policy
+        with:
+          github-token: ${{ github.token }}

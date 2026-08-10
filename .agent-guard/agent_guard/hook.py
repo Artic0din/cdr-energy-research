@@ -30,15 +30,19 @@ GUARDED_GIT_COMMANDS = {
     "am": "history-write",
     "cherry-pick": "history-write",
     "commit": "commit",
+    "fetch": "history-write",
     "merge": "merge",
     "mv": "history-write",
     "pull": "history-write",
     "rebase": "history-write",
+    "replace": "history-write",
     "reset": "history-write",
     "restore": "history-write",
     "revert": "history-write",
     "rm": "history-write",
     "push": "push",
+    "notes": "history-write",
+    "remote": "history-write",
     "send-pack": "push",
     "update-ref": "history-write",
 }
@@ -70,43 +74,58 @@ BRANCH_MUTATION_OPTIONS = {
     "--delete",
     "--move",
 }
-CHECKOUT_SWITCH_MUTATION_OPTIONS = {
-    "-b",
+CHECKOUT_SWITCH_FORCE_OPTIONS = {
     "-B",
-    "-c",
     "-C",
     "--orphan",
-    "--create",
     "--force-create",
 }
+CHECKOUT_SWITCH_CREATE_OPTIONS = {"-b", "-c", "--create"}
+FORBIDDEN_GIT_ENVIRONMENT = re.compile(
+    r"^(?:GIT_(?:DIR|WORK_TREE|COMMON_DIR|INDEX_FILE|OBJECT_DIRECTORY|"
+    r"ALTERNATE_OBJECT_DIRECTORIES|EXEC_PATH|TEMPLATE_DIR|SSH|SSH_COMMAND|"
+    r"CONFIG(?:_COUNT|_KEY_\d+|_VALUE_\d+|_PARAMETERS|_GLOBAL|_SYSTEM|_NOGLOBAL)?))$"
+)
 GH_APPROVED_TOP_LEVEL_COMMANDS = {
+    "agent-task",
     "alias",
     "api",
     "auth",
+    "attestation",
     "aw",
     "browse",
     "cache",
     "codespace",
     "completion",
+    "copilot",
     "config",
+    "discussion",
     "extension",
     "gist",
     "gpg-key",
     "issue",
     "label",
+    "licenses",
     "org",
     "pr",
     "project",
+    "preview",
     "release",
     "repo",
     "ruleset",
     "run",
     "search",
     "secret",
+    "skill",
     "ssh-key",
     "status",
     "variable",
     "workflow",
+}
+GH_READ_ONLY_SUBCOMMANDS = {
+    "issue": {"list", "status", "view"},
+    "pr": {"checks", "diff", "list", "status", "view"},
+    "release": {"download", "list", "verify", "verify-asset", "view"},
 }
 
 
@@ -399,43 +418,40 @@ def git_subcommand_action(subcommand: str, arguments: list[str]) -> str | None:
         argument in {"-n", "--dry-run"} for argument in arguments
     ):
         return None
+    if subcommand == "push" and any(
+        argument in {"-n", "--dry-run"} for argument in arguments
+    ):
+        return None
+    if subcommand == "fetch" and any(
+        argument in {"-n", "--dry-run"} for argument in arguments
+    ):
+        return None
     if subcommand == "config":
         return None if config_is_read_only(arguments) else "history-write"
     if subcommand == "stash":
         return None if arguments[:1] in (["list"], ["show"]) else "history-write"
+    if subcommand == "notes":
+        return None if arguments[:1] in (["list"], ["show"]) else "history-write"
+    if subcommand == "remote":
+        return None if remote_is_read_only(arguments) else "history-write"
     if subcommand in BRANCH_CHANGE_COMMANDS:
         if any(
-            argument in CHECKOUT_SWITCH_MUTATION_OPTIONS
-            or argument.startswith(("--orphan=", "--create=", "--force-create="))
-            or (len(argument) > 2 and argument[:2] in {"-b", "-B", "-c", "-C"})
+            argument in CHECKOUT_SWITCH_FORCE_OPTIONS
+            or argument.startswith(("--orphan=", "--force-create="))
+            or (len(argument) > 2 and argument[:2] in {"-B", "-C"})
             for argument in arguments
         ):
             return "history-write"
+        if any(
+            argument in CHECKOUT_SWITCH_CREATE_OPTIONS
+            or argument.startswith("--create=")
+            or (len(argument) > 2 and argument[:2] in {"-b", "-c"})
+            for argument in arguments
+        ):
+            return "branch-change"
         return "branch-change"
     if subcommand == "branch":
-        if any(argument in BRANCH_MUTATION_OPTIONS for argument in arguments):
-            return "history-write"
-        if arguments and not any(
-            argument
-            in {
-                "--all",
-                "--contains",
-                "--list",
-                "--merged",
-                "--no-merged",
-                "--remotes",
-                "--show-current",
-                "--verbose",
-                "-a",
-                "-l",
-                "-r",
-                "-v",
-                "-vv",
-            }
-            for argument in arguments
-        ):
-            return "history-write"
-        return None
+        return None if branch_is_read_only(arguments) else "history-write"
     if subcommand == "tag":
         if tag_is_read_only(arguments):
             return None
@@ -447,6 +463,71 @@ def git_subcommand_action(subcommand: str, arguments: list[str]) -> str | None:
     if subcommand == "clean":
         return "history-write"
     return GUARDED_GIT_COMMANDS.get(subcommand)
+
+
+def branch_is_read_only(arguments: list[str]) -> bool:
+    if not arguments:
+        return True
+    if any(argument in BRANCH_MUTATION_OPTIONS for argument in arguments):
+        return False
+    value_options = {
+        "--contains",
+        "--format",
+        "--merged",
+        "--no-contains",
+        "--no-merged",
+        "--points-at",
+        "--sort",
+    }
+    list_mode = any(
+        argument in {"--all", "--list", "--remotes", "--show-current", "-a", "-l", "-r"}
+        for argument in arguments
+    )
+    positionals: list[str] = []
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        if argument in value_options:
+            if index + 1 >= len(arguments):
+                return False
+            list_mode = True
+            index += 2
+            continue
+        if argument.startswith(tuple(f"{option}=" for option in value_options)):
+            list_mode = True
+            index += 1
+            continue
+        if argument in {
+            "--all",
+            "--list",
+            "--remotes",
+            "--show-current",
+            "--verbose",
+            "-a",
+            "-l",
+            "-r",
+            "-v",
+            "-vv",
+            "--color",
+            "--ignore-case",
+            "-i",
+        }:
+            index += 1
+            continue
+        if argument.startswith("-"):
+            return False
+        positionals.append(argument)
+        index += 1
+    return list_mode or not positionals
+
+
+def remote_is_read_only(arguments: list[str]) -> bool:
+    if not arguments:
+        return True
+    command = next(
+        (argument for argument in arguments if not argument.startswith("-")), ""
+    )
+    return command in {"", "get-url", "show"}
 
 
 def config_is_read_only(arguments: list[str]) -> bool:
@@ -614,7 +695,71 @@ def unwrap_command_prefix(tokens: list[str]) -> list[str]:
                 if not remaining:
                     raise ContractError(f"sudo option {option} is missing its value")
                 remaining.pop(0)
+    while remaining and executable_name(remaining[0]) in {"time", "timeout", "nohup"}:
+        wrapper = executable_name(remaining.pop(0))
+        if wrapper == "time":
+            remaining = unwrap_time(remaining)
+        elif wrapper == "timeout":
+            remaining = unwrap_timeout(remaining)
+        elif remaining[:1] == ["--"]:
+            remaining.pop(0)
     return remaining
+
+
+def unwrap_time(tokens: list[str]) -> list[str]:
+    remaining = list(tokens)
+    value_options = {"-f", "--format", "-o", "--output"}
+    flag_options = {"-a", "--append", "-p", "--portability", "-v", "--verbose"}
+    while remaining and remaining[0].startswith("-"):
+        option = remaining.pop(0)
+        if option == "--":
+            break
+        if option in value_options:
+            if not remaining:
+                raise ContractError(f"time option {option} is missing its value")
+            remaining.pop(0)
+        elif option not in flag_options:
+            raise ContractError(f"unsupported time option: {option}")
+    return remaining
+
+
+def unwrap_timeout(tokens: list[str]) -> list[str]:
+    remaining = list(tokens)
+    value_options = {"-k", "--kill-after", "-s", "--signal"}
+    flag_options = {"--foreground", "--preserve-status", "--verbose"}
+    while remaining and remaining[0].startswith("-"):
+        option = remaining.pop(0)
+        if option == "--":
+            break
+        if option in value_options:
+            if not remaining:
+                raise ContractError(f"timeout option {option} is missing its value")
+            remaining.pop(0)
+        elif option.startswith(("--kill-after=", "--signal=")):
+            continue
+        elif option not in flag_options:
+            raise ContractError(f"unsupported timeout option: {option}")
+    if not remaining:
+        raise ContractError("timeout is missing its duration")
+    remaining.pop(0)
+    return remaining
+
+
+def git_environment_failure(segment: str) -> str | None:
+    try:
+        tokens = shlex.split(segment)
+    except ValueError as error:
+        raise ContractError(f"Unparsable shell command: {error}") from error
+    assignments = [
+        token.partition("=")[0]
+        for token in tokens
+        if ENVIRONMENT_ASSIGNMENT.fullmatch(token)
+    ]
+    if not any(FORBIDDEN_GIT_ENVIRONMENT.fullmatch(name) for name in assignments):
+        return None
+    if not any(executable_name(token) in {"git", "gh", "gt"} for token in tokens):
+        return None
+    return "Git environment overrides are not supported by agent guard"
 
 
 def is_bootstrap_command(command: str, root: Path | None = None) -> bool:
@@ -623,6 +768,10 @@ def is_bootstrap_command(command: str, root: Path | None = None) -> bool:
 
 def is_preflight_command(command: str, root: Path | None = None) -> bool:
     return is_guard_command(command, "preflight", root)
+
+
+def is_abort_command(command: str, root: Path | None = None) -> bool:
+    return is_guard_command(command, "abort", root)
 
 
 def is_guard_command(command: str, subcommand: str, root: Path | None = None) -> bool:
@@ -677,6 +826,13 @@ def git_operations(
         )
     operations: list[DetectedGitAction] = []
     shell_syntax = without_heredoc_bodies(command)
+    if re.search(
+        r"(?:^|[;\n])\s*(?:function\s+)?[A-Za-z_][A-Za-z0-9_]*\s*\(\s*\)\s*\{",
+        shell_syntax,
+    ) and re.search(r"(?:^|[\s;|&{}])(?:git|gh|gt)(?:\s|$)", shell_syntax):
+        raise ContractError(
+            "shell functions containing git, gh, or gt are not supported"
+        )
     if has_unquoted_git_subshell(shell_syntax):
         raise ContractError(
             "shell subshell grouping containing git, gh, or gt is not supported"
@@ -688,9 +844,38 @@ def git_operations(
     prior_state_change = False
     prior_guarded_mutation = False
     for segment in segments:
+        environment_failure = git_environment_failure(segment)
+        if environment_failure:
+            operations.append(
+                DetectedGitAction(
+                    "history-write",
+                    target_root=root,
+                    selection_failure=environment_failure,
+                )
+            )
+            prior_state_change = True
+            continue
         tokens = strip_control_words(unwrap_command_prefix(command_tokens(segment)))
         if not tokens:
             continue
+        if "$" in tokens[0] or "`" in tokens[0]:
+            raise ContractError(
+                "dynamically expanded shell executables are not supported by agent guard"
+            )
+        if executable_name(tokens[0]) == "eval":
+            raise ContractError("shell eval is not supported by agent guard")
+        if tokens[0] == "case" and any(
+            executable_name(token) in {"git", "gh", "gt"} for token in tokens[1:]
+        ):
+            raise ContractError(
+                "shell case statements containing git, gh, or gt are not supported"
+            )
+        if executable_name(tokens[0]) in {"find", "parallel", "xargs"} and any(
+            executable_name(token) in {"git", "gh", "gt"} for token in tokens[1:]
+        ):
+            raise ContractError(
+                "indirect command execution containing git, gh, or gt is not supported"
+            )
         if executable_name(tokens[0]) == "cd":
             directory_arguments = tokens[1:]
             if directory_arguments[:1] == ["--"]:
@@ -732,6 +917,22 @@ def git_operations(
                 prior_guarded_mutation = True
             continue
         gh_index = gh_subcommand_index(tokens)
+        if gh_index is not None and any(
+            "$" in token or "`" in token for token in tokens[gh_index : gh_index + 2]
+        ):
+            operations.append(
+                DetectedGitAction(
+                    "history-write",
+                    tuple(tokens[gh_index + 1 :]),
+                    target_root=root,
+                    selection_failure=(
+                        "GitHub CLI dispatch contains an unresolved shell expansion"
+                    ),
+                    source="gh",
+                )
+            )
+            prior_state_change = True
+            continue
         if gh_index is not None and tokens[gh_index : gh_index + 2] == ["pr", "merge"]:
             operations.append(
                 DetectedGitAction(
@@ -782,6 +983,50 @@ def git_operations(
                     )
                 )
                 prior_state_change = True
+            continue
+        if gh_index is not None and tokens[gh_index] == "extension":
+            if tokens[gh_index + 1 : gh_index + 2] not in (["list"], ["search"]):
+                operations.append(
+                    DetectedGitAction(
+                        "history-write",
+                        tuple(tokens[gh_index + 1 :]),
+                        target_root=root,
+                        selection_failure=(
+                            "GitHub CLI extension execution and mutation are not "
+                            "supported by agent guard"
+                        ),
+                        source="gh",
+                    )
+                )
+                prior_state_change = True
+            continue
+        if gh_index is not None and tokens[gh_index : gh_index + 2] == ["repo", "sync"]:
+            operations.append(
+                DetectedGitAction(
+                    "history-write",
+                    tuple(tokens[gh_index + 2 :]),
+                    target_root=root,
+                    selection_failure=(
+                        "GitHub repository synchronization is not supported by agent guard"
+                    ),
+                    source="gh",
+                )
+            )
+            prior_state_change = True
+            continue
+        if gh_index is not None and tokens[gh_index] in GH_READ_ONLY_SUBCOMMANDS:
+            top_level = tokens[gh_index]
+            subcommand = tokens[gh_index + 1] if gh_index + 1 < len(tokens) else ""
+            if subcommand not in GH_READ_ONLY_SUBCOMMANDS[top_level]:
+                operations.append(
+                    DetectedGitAction(
+                        "history-write",
+                        tuple(tokens[gh_index + 1 :]),
+                        target_root=root,
+                        source="gh",
+                    )
+                )
+                prior_guarded_mutation = True
             continue
         if (
             gh_index is not None
@@ -854,11 +1099,11 @@ def git_operations(
                 if "=" not in option:
                     index += 1
             elif option == "-c":
-                if index < len(tokens) and tokens[index].startswith("alias."):
+                if index < len(tokens) and tokens[index].lower().startswith("alias."):
                     alias_override = True
                 index += 1
             elif option.startswith("-c") and len(option) > 2:
-                if option[2:].startswith("alias."):
+                if option[2:].lower().startswith("alias."):
                     alias_override = True
             elif option.startswith("--config-env"):
                 selection_failure = (
@@ -870,6 +1115,19 @@ def git_operations(
         if index >= len(tokens):
             continue
         subcommand = tokens[index]
+        if "$" in subcommand or "`" in subcommand:
+            operations.append(
+                DetectedGitAction(
+                    "history-write",
+                    tuple(tokens[index + 1 :]),
+                    target_root=root,
+                    selection_failure=(
+                        "Git subcommand contains an unresolved shell expansion"
+                    ),
+                )
+            )
+            prior_state_change = True
+            continue
         if alias_override:
             operations.append(
                 DetectedGitAction(
@@ -912,7 +1170,7 @@ def git_operations(
             prior_state_change = True
             continue
         if (
-            subcommand in {"config", "stash"}
+            subcommand in {"config", "remote", "stash"}
             and git_subcommand_action(subcommand, tokens[index + 1 :]) is not None
         ):
             operations.append(
@@ -1006,10 +1264,84 @@ def with_compound_failure(operation: DetectedGitAction) -> DetectedGitAction:
 def protected_history_write_failure(
     subcommand: str, arguments: list[str]
 ) -> str | None:
-    if subcommand not in {"branch", "checkout", "switch", "update-ref"}:
+    if subcommand not in {"branch", "checkout", "fetch", "switch", "update-ref"}:
         return None
     protected = {"main", "master", "refs/heads/main", "refs/heads/master"}
-    if any(argument.lstrip("+") in protected for argument in arguments):
+    targets: list[str] = []
+    if subcommand == "fetch":
+        for argument in arguments:
+            if argument.startswith("-") or ":" not in argument:
+                continue
+            targets.append(argument.lstrip("+").rsplit(":", 1)[1])
+        if any(target in protected for target in targets):
+            return "git fetch cannot update a protected branch"
+        return None
+    if subcommand == "update-ref":
+        if "--stdin" in arguments:
+            return "git update-ref --stdin cannot safely inspect protected branches"
+        target = next((item for item in arguments if not item.startswith("-")), "")
+        return (
+            "git update-ref cannot update a protected branch"
+            if target.lstrip("+") in protected
+            else None
+        )
+    if subcommand == "branch":
+        value_options = {
+            "--contains",
+            "--format",
+            "--merged",
+            "--no-contains",
+            "--no-merged",
+            "--points-at",
+            "--sort",
+        }
+        positionals: list[str] = []
+        index = 0
+        while index < len(arguments):
+            argument = arguments[index]
+            if argument in value_options:
+                index += 2
+                continue
+            if argument.startswith("-"):
+                index += 1
+                continue
+            positionals.append(argument)
+            index += 1
+        if positionals[:1] and positionals[0].lstrip("+") in protected:
+            return "git branch cannot update a protected branch"
+        return None
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        if subcommand in {"checkout", "switch"} and argument in {
+            "-B",
+            "-C",
+            "-b",
+            "-c",
+            "--create",
+            "--force-create",
+            "--orphan",
+        }:
+            if index + 1 < len(arguments):
+                targets.append(arguments[index + 1])
+                index += 2
+                continue
+        if (
+            subcommand in {"checkout", "switch"}
+            and len(argument) > 2
+            and argument[:2]
+            in {
+                "-B",
+                "-C",
+                "-b",
+                "-c",
+            }
+        ):
+            targets.append(argument[2:])
+        elif argument.startswith(("--create=", "--force-create=", "--orphan=")):
+            targets.append(argument.partition("=")[2])
+        index += 1
+    if any(argument.lstrip("+") in protected for argument in targets):
         return f"git {subcommand} cannot update a protected branch"
     return None
 
@@ -1049,7 +1381,7 @@ def gh_api_action(arguments: list[str], cwd: Path | None = None) -> str | None:
     method = "GET"
     method_is_explicit = False
     endpoint = ""
-    payloads: list[str] = []
+    payloads: list[tuple[str, bool]] = []
     value_options = {
         "-F",
         "--field",
@@ -1080,34 +1412,34 @@ def gh_api_action(arguments: list[str], cwd: Path | None = None) -> str | None:
                 raise ContractError(f"gh api option {argument} is missing its value")
             value = arguments[index + 1]
             if argument in {"-F", "--field", "-f", "--raw-field"}:
-                payloads.append(value)
+                payloads.append((value, argument in {"-F", "--field"}))
             if (
                 argument in {"-F", "--field", "-f", "--raw-field"}
                 and not method_is_explicit
             ):
                 method = "POST"
             elif argument == "--input":
-                payloads.append(f"@{value}")
+                payloads.append((f"@{value}", True))
                 if not method_is_explicit:
                     method = "POST"
             index += 2
             continue
         elif argument.startswith("--field="):
-            payloads.append(argument.partition("=")[2])
+            payloads.append((argument.partition("=")[2], True))
             if not method_is_explicit:
                 method = "POST"
         elif argument.startswith("--raw-field="):
-            payloads.append(argument.partition("=")[2])
+            payloads.append((argument.partition("=")[2], False))
             if not method_is_explicit:
                 method = "POST"
         elif (argument.startswith("-F") or argument.startswith("-f")) and len(
             argument
         ) > 2:
-            payloads.append(argument[2:])
+            payloads.append((argument[2:], argument.startswith("-F")))
             if not method_is_explicit:
                 method = "POST"
         elif argument.startswith("--input="):
-            payloads.append(f"@{argument.partition('=')[2]}")
+            payloads.append((f"@{argument.partition('=')[2]}", True))
             if not method_is_explicit:
                 method = "POST"
         elif not argument.startswith("-") and not endpoint:
@@ -1140,13 +1472,13 @@ def gh_api_merges(arguments: list[str], cwd: Path | None = None) -> bool:
 
 
 def graphql_payload_texts(
-    values: list[str], cwd: Path | None
+    values: list[tuple[str, bool]], cwd: Path | None
 ) -> tuple[list[str], bool]:
     texts: list[str] = []
     opaque = False
-    for value in values:
+    for value, expands_files in values:
         candidate = value.partition("=")[2] if "=" in value else value
-        if not candidate.startswith("@"):
+        if not expands_files or not candidate.startswith("@"):
             texts.append(candidate)
             continue
         filename = candidate[1:]
@@ -1183,7 +1515,9 @@ def git_actions(command: str) -> list[str]:
 def pre_tool_failures(payload: dict[str, Any], root: Path) -> list[str]:
     command = shell_command(payload)
     if command and (
-        is_bootstrap_command(command, root) or is_preflight_command(command, root)
+        is_bootstrap_command(command, root)
+        or is_preflight_command(command, root)
+        or is_abort_command(command, root)
     ):
         return []
     try:
