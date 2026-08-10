@@ -4,6 +4,9 @@ All notable changes to this research repo.
 
 ## [Unreleased]
 
+### Removed
+- Removed Repo Assist workflows, generated locks, cached imports, and compiler-only metadata.
+
 ### Fixed
 - Shared PRD endpoints now deduplicate retailers by `cdrBrand`, filter plan
   lists by that brand identity, serialize requests per base URI, and exclude
