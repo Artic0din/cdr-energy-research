@@ -52,3 +52,11 @@ Dev tests: `python -m pytest tests/ -q` (needs `requirements-dev.txt`). No lint 
 - For issue-backed work, use one issue per branch and pull request, include the issue number in the branch name, and add `Fixes #123` to the pull-request body.
 - Keep Project status at `Todo` before work, `In Progress` during implementation or review, and `Done` only after closure or merge.
 - Update issue checklists only for verified work; checklist completion is never a merge gate.
+
+## Agent Guard
+
+- This policy applies to every coding agent, including Codex, Claude, Cursor, GitHub Copilot, Devin, and GitHub-hosted agents.
+- Before the first repository tool call, start a contract with `.agent-guard/agent-guard begin --terminal-action <report-only|fix-and-push|full-remediation> --deliverable "<outcome>"`.
+- Run `.agent-guard/agent-guard preflight`, keep every requested deliverable explicit, and record exact validation, push, review-thread, and CI evidence as required by the chosen terminal action.
+- Finish only when `.agent-guard/agent-guard check-complete` passes; archive a superseded run with `.agent-guard/agent-guard abort --reason "<exact reason>"`.
+- Agents must not merge pull requests; hand a fully validated, review-resolved pull request to the Graphite/GitHub merge gate.

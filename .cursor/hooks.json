@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD/.agent-guard${PYTHONPATH:+:$PYTHONPATH}\" python3 -m agent_guard.hook --host cursor --event pre-tool",
+        "timeout": 10,
+        "failClosed": true
+      }
+    ],
+    "stop": [
+      {
+        "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD/.agent-guard${PYTHONPATH:+:$PYTHONPATH}\" python3 -m agent_guard.hook --host cursor --event stop",
+        "timeout": 10,
+        "loop_limit": 2,
+        "failClosed": true
+      }
+    ]
+  }
+}

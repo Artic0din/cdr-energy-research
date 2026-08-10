@@ -4,6 +4,9 @@ All notable changes to this research repo.
 
 ## [Unreleased]
 
+### Changed
+- Adopted agent-neutral run contracts, cloud-agent hooks, and a pinned pull-request policy gate.
+
 ### Fixed
 - Shared PRD endpoints now deduplicate retailers by `cdrBrand`, filter plan
   lists by that brand identity, serialize requests per base URI, and exclude
