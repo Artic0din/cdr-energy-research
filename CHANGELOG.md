@@ -5,7 +5,8 @@ All notable changes to this research repo.
 ## [Unreleased]
 
 ### Removed
-- Removed Repo Assist and its dedicated workflows, gh-aw agent tooling, generated locks, cached imports, and repository-only credentials.
+- Removed Repo Assist and its dedicated workflows, gh-aw agent tooling, generated
+  locks, cached imports, and repository-only credentials.
 
 ### Fixed
 - Shared PRD endpoints now deduplicate retailers by `cdrBrand`, filter plan
