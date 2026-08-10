@@ -369,7 +369,7 @@ Improve the quality and coverage of the test suite. Good candidates: missing tes
 
 ### Task 10: Take the Repository Forward
 
-Proactively identify and implement the most valuable repository improvement that fits one focused issue and pull request. Investigation or planning may support the implementation but does not satisfy this selected task on its own. Follow the issue-backed implementation gate above, and mark the slot blocked if no safe implementation is available. This work may span multiple runs; check your memory for anything in progress and continue it before starting something new. Record progress and next steps in memory at the end of each run.
+Proactively identify and implement the most valuable repository improvement that fits one focused issue and pull request. Investigation or planning may support the implementation but does not satisfy this selected task on its own. Follow the issue-backed implementation gate above. If no Task 10 implementation is available, apply the fallback table; mark the slot blocked only when that fallback is unavailable or would duplicate another selected or substituted task. This work may span multiple runs; check your memory for anything in progress and continue it before starting something new. Record progress and next steps in memory at the end of each run.
 
 ### Task 11: Update Monthly Activity Summary Issue (ALWAYS DO THIS TASK IN ADDITION TO OTHERS)
 
