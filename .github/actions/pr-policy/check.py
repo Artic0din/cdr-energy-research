@@ -30,13 +30,13 @@ CONVENTIONAL_TYPES = (
 CONVENTIONAL_TYPE_PATTERN = "|".join(map(re.escape, CONVENTIONAL_TYPES))
 CONVENTIONAL_TITLE = re.compile(
     rf"^(?:{CONVENTIONAL_TYPE_PATTERN})"
-    r"(?:\([a-z0-9][a-z0-9._/-]*\))?: .+"
+    r"(?:\([a-z0-9][a-z0-9._/-]*\))?!?: .+"
 )
 ISSUE_BRANCH = re.compile(
-    rf"^(?:{CONVENTIONAL_TYPE_PATTERN}|cursor)/(\d+)(?:-|$)",
+    rf"^(?:{CONVENTIONAL_TYPE_PATTERN}|cursor|issue)/(\d+)(?:-|$)",
     re.IGNORECASE,
 )
-ISSUE_LINK = re.compile(r"(?im)^\s*(?:[-*+]\s*)?(?:fixes|closes|resolves)\s+#(\d+)\b")
+ISSUE_LINK = re.compile(r"(?i)\b(?:fixes|closes|resolves)\s+#(\d+)\b")
 VALIDATION_SECTION = re.compile(
     r"(?ims)^#{1,3}\s+(?:test plan|tests?|validation|verification)\s*$"
     r"(?P<content>.*?)(?=^#{1,3}\s+|\Z)"
