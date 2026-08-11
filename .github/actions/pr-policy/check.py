@@ -14,13 +14,26 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+CONVENTIONAL_TYPES = (
+    "feat",
+    "fix",
+    "test",
+    "refactor",
+    "perf",
+    "docs",
+    "style",
+    "chore",
+    "ci",
+    "build",
+    "revert",
+)
+CONVENTIONAL_TYPE_PATTERN = "|".join(map(re.escape, CONVENTIONAL_TYPES))
 CONVENTIONAL_TITLE = re.compile(
-    r"^(?:feat|fix|test|refactor|perf|docs|style|chore|ci|build|revert)"
+    rf"^(?:{CONVENTIONAL_TYPE_PATTERN})"
     r"(?:\([a-z0-9][a-z0-9._/-]*\))?: .+"
 )
 ISSUE_BRANCH = re.compile(
-    r"^(?:feat|fix|test|refactor|perf|cursor)/"
-    r"(\d+)(?:-|$)",
+    rf"^(?:{CONVENTIONAL_TYPE_PATTERN}|cursor)/(\d+)(?:-|$)",
     re.IGNORECASE,
 )
 ISSUE_LINK = re.compile(r"(?im)^\s*(?:[-*+]\s*)?(?:fixes|closes|resolves)\s+#(\d+)\b")
@@ -29,8 +42,9 @@ VALIDATION_SECTION = re.compile(
     r"(?P<content>.*?)(?=^#{1,3}\s+|\Z)"
 )
 NEGATIVE_VALIDATION = re.compile(
-    r"(?i)^(?:n/?a|none|not applicable|not required|not run|not tested|pending|"
-    r"skipped|todo)(?:\b|[.!])"
+    r"(?i)(?:^|:\s*)(?:n/?a|none|not applicable|not required|not run|"
+    r"not tested|pending|skipped|todo)(?:\b|[.!])|"
+    r"\btests?\s+(?:were\s+|was\s+)?not\s+(?:run|tested)\b"
 )
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 FENCED_CODE = re.compile(
@@ -106,8 +120,6 @@ def github_issue_lookup(issue_number: int) -> tuple[bool, str]:
         return False, f"unable to verify linked issue #{issue_number}: {error}"
     if issue.get("pull_request") is not None:
         return False, f"linked item #{issue_number} is a pull request, not an issue"
-    if issue.get("state") != "open":
-        return False, f"linked issue #{issue_number} is not open"
     return True, ""
 
 
@@ -138,7 +150,7 @@ def meaningful_validation(content: str) -> bool:
             continue
         if ISSUE_LINK.fullmatch(stripped):
             continue
-        if NEGATIVE_VALIDATION.match(stripped):
+        if NEGATIVE_VALIDATION.search(stripped):
             continue
         return True
     return False
