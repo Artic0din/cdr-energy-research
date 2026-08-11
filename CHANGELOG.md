@@ -4,6 +4,10 @@ All notable changes to this research repo.
 
 ## [Unreleased]
 
+### Removed
+- Removed Repo Assist and its dedicated workflows, gh-aw agent tooling, generated
+  locks, cached imports, and repository-only credential references.
+
 ### Fixed
 - Shared PRD endpoints now deduplicate retailers by `cdrBrand`, filter plan
   lists by that brand identity, serialize requests per base URI, and exclude
@@ -22,7 +26,6 @@ All notable changes to this research repo.
 - Added deterministic pull-request validation for Python sources and committed JSON research data.
 
 ### Changed
-- Corrected Repo Assist to allow up to four single-task, issue-backed pull requests per run while retaining Graphite handoff, persistent memory, and bounded spending.
 - Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Added
