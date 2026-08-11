@@ -46,6 +46,9 @@ NEGATIVE_VALIDATION = re.compile(
     r"not tested|pending|skipped|todo)(?:\b|[.!])|"
     r"\btests?\s+(?:were\s+|was\s+)?not\s+(?:run|tested)\b"
 )
+VALIDATION_SCAFFOLD = re.compile(
+    r"(?i)^(?:results?|commands?|evidence|checks?|tests?|validation|verification):$"
+)
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 FENCED_CODE = re.compile(
     r"(?ms)^[ \t]*(?P<fence>`{3,}|~{3,})[^\n]*\n.*?^[ \t]*(?P=fence)[ \t]*$"
@@ -146,13 +149,17 @@ def meaningful_validation(content: str) -> bool:
         if re.match(r"^\[\s\]", stripped):
             continue
         stripped = re.sub(r"^\[[ xX]\]\s*", "", stripped)
-        if not stripped:
-            continue
-        if ISSUE_LINK.fullmatch(stripped):
-            continue
-        if NEGATIVE_VALIDATION.search(stripped):
-            continue
-        return True
+        for clause in stripped.split(";"):
+            clause = clause.strip()
+            if not clause:
+                continue
+            if ISSUE_LINK.fullmatch(clause):
+                continue
+            if VALIDATION_SCAFFOLD.fullmatch(clause):
+                continue
+            if NEGATIVE_VALIDATION.search(clause):
+                continue
+            return True
     return False
 
 
