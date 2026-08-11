@@ -75,9 +75,11 @@ def validate_pull_request(
         failures.append("pull-request title is not conventional")
     if not body.strip():
         failures.append("pull-request body is empty")
-    elif not (validation_match := VALIDATION_SECTION.search(body)):
+    elif not (validation_matches := list(VALIDATION_SECTION.finditer(body))):
         failures.append("pull-request body lacks a test or validation section")
-    elif not meaningful_validation(validation_match.group("content")):
+    elif not any(
+        meaningful_validation(match.group("content")) for match in validation_matches
+    ):
         failures.append("pull-request validation section has no verification evidence")
     issue_match = ISSUE_BRANCH.search(branch)
     if issue_match:
