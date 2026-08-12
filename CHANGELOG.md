@@ -6,7 +6,7 @@ All notable changes to this research repo.
 
 ### Changed
 - Hardened the vendored host-neutral pull-request policy so it runs from the trusted base branch,
-  verifies open linked issues, and accepts common `Testing` validation headings.
+  verifies linked items exist and are issues, and accepts common `Testing` validation headings.
 - Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Removed
