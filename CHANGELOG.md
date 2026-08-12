@@ -4,6 +4,10 @@ All notable changes to this research repo.
 
 ## [Unreleased]
 
+### Changed
+- Updated the vendored host-neutral pull-request policy to accept common
+  `Testing` validation headings.
+
 ### Removed
 - Removed Repo Assist and its dedicated workflows, gh-aw agent tooling, generated
   locks, cached imports, and repository-only credential references.
