@@ -7,6 +7,7 @@ All notable changes to this research repo.
 ### Changed
 - Hardened the vendored host-neutral pull-request policy so it runs from the trusted base branch,
   verifies open linked issues, and accepts common `Testing` validation headings.
+- Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Removed
 - Removed Repo Assist and its dedicated workflows, gh-aw agent tooling, generated
@@ -28,9 +29,6 @@ All notable changes to this research repo.
   as a clean sweep), so the publish gate refuses to release a catalogue missing
   that retailer's later-page plans.
 - Added deterministic pull-request validation for Python sources and committed JSON research data.
-
-### Changed
-- Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Added
 - Branding: logo, wordmark, and social-preview assets in `assets/`. The README
