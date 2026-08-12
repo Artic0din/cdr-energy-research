@@ -5,8 +5,8 @@ All notable changes to this research repo.
 ## [Unreleased]
 
 ### Changed
-- Updated the vendored host-neutral pull-request policy to accept common
-  `Testing` validation headings.
+- Hardened the vendored host-neutral pull-request policy so it runs from the trusted base branch,
+  verifies open linked issues, and accepts common `Testing` validation headings.
 
 ### Removed
 - Removed Repo Assist and its dedicated workflows, gh-aw agent tooling, generated
