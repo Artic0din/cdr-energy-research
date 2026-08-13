@@ -5,6 +5,8 @@ All notable changes to this research repo.
 ## [Unreleased]
 
 ### Removed
+- Retired the custom cross-repository agent delivery gate; native GitHub rules
+  and repository-specific CI remain in force.
 - Removed Repo Assist and its dedicated workflows, gh-aw agent tooling, generated
   locks, cached imports, and repository-only credential references.
 
