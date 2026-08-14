@@ -39,7 +39,7 @@ cdr-energy-research/
 ├── scripts/
 │   ├── cdr_probe_v1.py            initial sample probe (5 plans/retailer)
 │   ├── cdr_full_sweep_v1.py       first full sweep
-│   └── cdr_full_sweep_v2.py       comprehensive sweep w/ EME refdata2 + ?brand=
+│   └── cdr_full_sweep_v2.py       comprehensive sweep w/ EME refdata2 + brand filtering
 └── cache/v1                       symlink to /tmp/cdr-cache (149 MB raw responses)
 ```
 
@@ -59,16 +59,20 @@ cdr-energy-research/
 | Plan list | `GET {base}/cds-au/v1/energy/plans?fuelType=ELECTRICITY&type=ALL&effective=CURRENT&page-size=1000&brand={cdrBrand}&updated-since={iso}` | `x-v: 1` | `brand={cdrBrand}` for shared endpoints; `updated-since=` for incremental |
 | Plan detail | `GET {base}/cds-au/v1/energy/plans/{planId}` | `x-v: 3` | v2 retired Mar 2025 |
 
-`{base}` is `cdr.energymadeeasy.gov.au/<cdrCode>`. In the committed EME snapshot,
-three constructed base URIs host multiple brands; those brands share a
-`cdrCode` but have distinct `cdrBrand` values.
+`{base}` is normally `cdr.energymadeeasy.gov.au/<cdrCode>`. The sweep's
+deduplicated view of the committed EME snapshot constructs three shared base
+URIs hosting nine brands. The authoritative AER registry maps iO Energy to the
+Radian base URI instead of its earlier EME record's constructed `/io-energy/`
+URI, producing four operational shared base URIs hosting 11 brands.
 
 ## Headline findings from the sweeps
 
 - **117 committed retailer records** in the current generated snapshot; the
   corrected sweep deduplicates future regeneration by `cdrBrand`
-- **3 shared constructed base URIs hosting 9 brands** — use
-  `?brand=<cdrBrand>` to isolate a co-hosted brand
+- **3 shared base URIs hosting 9 brands in generated EME-derived outputs; the
+  authoritative AER mapping adds `/radian/`, producing 4 shared base URIs
+  hosting 11 brands operationally** — use the `brand=<cdrBrand>` query
+  parameter to isolate a co-hosted brand
 - **10,266 residential ELEC plans** observed in v1 sweep (78 retailers)
 - **1,724 distinct shape signatures** — extreme long tail; top 30 sigs cover only 13% of plans
 - **0 retailers 404 on plan detail** when listed — reliability is excellent
@@ -93,7 +97,7 @@ three constructed base URIs host multiple brands; those brands share a
 ## Operational notes
 
 - API is **public**, no auth required for PRD (per AER fact sheet).
-- Polite usage: **1 req/sec per retailer**, 12-way parallel across retailers is fine.
+- Polite usage: **1 req/sec per base URI**, 12-way parallel across distinct base URIs is fine.
 - v1 sweep took **33.5 min** for 78 retailers / 10,266 plans on a residential connection.
 - Cache hits make re-runs free. Use `?updated-since=<iso>` for incremental sync (5 min instead of 33 min).
 - Spec versions: plan list = v1 (`x-v: 1`), plan detail = v3 (`x-v: 3`). v2 retired March 2025.

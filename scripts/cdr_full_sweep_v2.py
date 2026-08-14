@@ -3,13 +3,13 @@
 
 Improvements over v1:
 - Source registry from Energy Made Easy refdata2 (117 orgs, vs jxeeno's 78)
-- Use ?brand=<cdrBrand> to disambiguate plans on shared base URIs
+- Use the brand=<cdrBrand> query parameter on shared base URIs
 - Probe ALL fields (top-level plan, contract, all sub-lists, deep TOU windows)
 - Capture enum value distributions across all plans
 - Output comprehensive catalog: shape signatures + retailer matrix +
   enum reference + GST flags + parser spec + registry comparison
 
-Stdlib only. Resumable. Polite (1 req/sec/retailer, 12-way parallel).
+Stdlib only. Resumable. Polite (1 req/sec per base URI, 12-way parallel).
 
 Cache layout: /tmp/cdr-cache/{slug}/{planId}.json (compatible with v1 cache)
 """
@@ -313,9 +313,9 @@ def current_plan_ids(stat: dict) -> set[str]:
 def process_retailer(r: dict, shared_base_brands: dict, refresh: bool = False) -> dict:
     """Fetch and cache plans for one brand.
 
-    For shared base URIs, use ?brand= to filter; for unique, fetch all. On a
-    ``refresh`` run the cached plan list and plan details are bypassed so the
-    catalogue is built from live data.
+    For shared base URIs, use the brand query parameter to filter; for unique,
+    fetch all. On a ``refresh`` run the cached plan list and plan details are
+    bypassed so the catalogue is built from live data.
     """
     slug = r["slug"]
     base = r["baseUri"]
