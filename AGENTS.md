@@ -52,3 +52,5 @@ Dev tests: `python -m pytest tests/ -q` (needs `requirements-dev.txt`). No lint 
 - For issue-backed work, use one issue per branch and pull request, include the issue number in the branch name, and add `Fixes #123` to the pull-request body.
 - Keep Project status at `Todo` before work, `In Progress` during implementation or review, and `Done` only after closure or merge.
 - Update issue checklists only for verified work; checklist completion is never a merge gate.
+
+Use [shared repository automation](docs/shared-automation.md) for selected agent skills, versioned checks and project-specific validation boundaries.

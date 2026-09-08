@@ -28,6 +28,8 @@ All notable changes to this research repo.
 - Added deterministic pull-request validation for Python sources and committed JSON research data.
 
 ### Changed
+
+- Adopted versioned shared repository checks and tailored documentation/agent skills while retaining project-specific validation.
 - Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
 
 ### Added
