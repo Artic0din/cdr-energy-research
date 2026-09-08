@@ -51,6 +51,6 @@ Make those changes in the same PR, including Dependabot PRs.
 Do not advance the skill manifest for a workflow-only update.
 Its revision records the copied skills' merge base and changes only through a skill update.
 Update copied skills separately using the old library source, current tailored file and new library source; preserve local adaptations and resolve conflicts explicitly.
-The [skill-update tooling](https://github.com/Artic0din/reusable-workflows/pull/4) is introduced separately; use it after that PR merges.
+The [skill-update tooling](https://github.com/Artic0din/reusable-workflows/pull/4) is merged and available for copied-skill updates.
 Onboarding does not install a recurring job or grant a cross-repository credential.
 Revert a consumer update commit to restore its prior workflow pins, skill contents and source manifest.
