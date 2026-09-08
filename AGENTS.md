@@ -48,9 +48,9 @@ Dev tests: `python -m pytest tests/ -q` (needs `requirements-dev.txt`). No lint 
 ## Work tracking
 
 - GitHub Issues are canonical for planned, multi-session, or backlog work; small one-PR fixes do not require an issue.
-- The user-level `Development` Project is a dashboard, while issues, pull requests, reviews, and CI remain authoritative.
+- GitHub Issues, pull requests, reviews and CI are authoritative; do not use the user-level `Development` Project for this work.
 - For issue-backed work, use one issue per branch and pull request, include the issue number in the branch name, and add `Fixes #123` to the pull-request body.
-- Keep Project status at `Todo` before work, `In Progress` during implementation or review, and `Done` only after closure or merge.
+- Keep issue state aligned with reality and close issues only after implementation merges or deliberate abandonment.
 - Update issue checklists only for verified work; checklist completion is never a merge gate.
 
 Use [shared repository automation](docs/shared-automation.md) for selected agent skills, versioned checks and project-specific validation boundaries.

@@ -30,7 +30,8 @@ All notable changes to this research repo.
 ### Changed
 
 - Adopted versioned shared repository checks and tailored documentation/agent skills while retaining project-specific validation.
-- Replaced Linear tracking rules with GitHub Issues and the user-level Development Project for local and Cursor Cloud agents.
+- Replaced Linear tracking rules with GitHub Issues and pull requests for local and Cursor Cloud agents.
+  The user-level Development Project must not be used for work tracking.
 
 ### Added
 - Branding: logo, wordmark, and social-preview assets in `assets/`. The README
