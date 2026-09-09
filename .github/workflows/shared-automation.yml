@@ -1,0 +1,28 @@
+name: Shared repository automation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  shared-baseline:
+    name: Shared repository baseline
+    uses: Artic0din/reusable-workflows/.github/workflows/baseline.yml@ad2f70ec9dbf008652223e77424e9b329c835ad1  # v1.1.0
+    with:
+      required-files: >-
+        README.md, CHANGELOG.md, .gitignore, AGENTS.md, requirements-dev.txt, scripts/cdr_full_sweep_v2.py,
+        scripts/build_catalogue.py, docs/parser-spec.md, tests/test_build_catalogue.py,
+        docs/shared-automation.md, .github/reusable-skills.json, .github/dependabot.yml,
+        .github/workflows/shared-automation.yml, .github/skills/readme-docs/SKILL.md,
+        .github/skills/refresh-instructions/SKILL.md, .github/skills/github-actions/SKILL.md,
+        .github/skills/test-gap-audit/SKILL.md, .github/agents/readme-specialist.agent.md
