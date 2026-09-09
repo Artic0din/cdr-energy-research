@@ -29,6 +29,7 @@ All notable changes to this research repo.
 
 ### Changed
 
+- Updated shared repository checks and matching workflow documentation to the reviewed v1.1.0 release.
 - Adopted versioned shared repository checks and tailored documentation/agent skills while retaining project-specific validation.
 - Replaced Linear tracking rules with GitHub Issues and pull requests for local and Cursor Cloud agents.
   The user-level Development Project must not be used for work tracking.
