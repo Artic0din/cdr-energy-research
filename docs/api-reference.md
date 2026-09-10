@@ -12,7 +12,8 @@ Richest metadata source: EME refdata2 (`https://api.energymadeeasy.gov.au/refdat
 
 ### Shared base URIs
 
-Three constructed base URIs in the committed EME snapshot host multiple CDR brands:
+The sweep's deduplicated view of the committed EME snapshot constructs three
+base URIs that host multiple CDR brands:
 
 | Base URI | Brands hosted |
 |---|---|
@@ -20,7 +21,16 @@ Three constructed base URIs in the committed EME snapshot host multiple CDR bran
 | `/ovo-energy/` | MYOB powered by OVO, OVO Energy, OVO Energy for CTM |
 | `/future-x/` | Future X Power (`cdrBrand=future-x`), Sunswitch (`cdrBrand=sunswitch`) |
 
-→ When fetching from a shared endpoint, **use `?brand=<cdrBrand>`** to filter to one brand's plans.
+The authoritative AER registry adds a fourth operational shared base URI. It
+maps iO Energy to `/radian/`, while first-seen `cdrBrand` deduplication of the
+committed EME snapshot retains an earlier `/io-energy/` record:
+
+| Base URI | Brands hosted |
+|---|---|
+| `/radian/` | Radian Energy, iO Energy |
+
+→ When fetching from a shared endpoint, **use the `brand=<cdrBrand>` query
+parameter** to filter to one brand's plans.
 
 ## Endpoints
 
